@@ -408,6 +408,13 @@ export function buildHub(terrain: Terrain): HubLayout {
   );
   s.points.push({ id: 'dock', label: 'Harbor', x: shoreProbe + 2, z: DOCK.z, radius: 6, kind: 'dock' });
 
+  // ---------------- public crafting bench (next to Gus)
+  s.box(-40, Y, 6, 3, 1.0, 1.2, WOOD, true);
+  s.box(-40, Y + 1.0, 6, 3.2, 0.12, 1.3, 0x6a4a2a);
+  s.box(-40.8, Y + 1.12, 6, 0.8, 0.2, 0.4, 0x8a8a92);
+  s.sign('CRAFTING BENCH', -40, Y + 2.2, 6.6, 0, 3, 0.6);
+  s.points.push({ id: 'public_bench', label: 'Crafting bench', x: -40, z: 8, radius: 4, kind: 'craft' });
+
   // ---------------- airfield
   const AY = terrain.heightAt(AIRFIELD.x, AIRFIELD.z);
   s.parts.push({

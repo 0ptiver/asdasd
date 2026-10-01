@@ -162,6 +162,7 @@ export class PlayerSystem implements System {
     let m = this.extraSpeed;
     const boots = st.gear.boots ? (ITEM_BY_ID[st.gear.boots]?.buff?.speed ?? 0) : 0;
     m *= 1 + boots;
+    if (this.buffs.slow) m *= 0.6;
     return m;
   }
 
@@ -172,6 +173,12 @@ export class PlayerSystem implements System {
       if (k.endsWith('_t')) continue;
     }
     if (this.mode === 'vehicle') {
+      if (!this.sim.vehicles.current && !inp.uiOpen) {
+        // riding something scripted (ferry): free camera look
+        const sens = 0.0022 * this.sim.game.settings.sensitivity;
+        this.camYaw -= inp.lookDX * sens;
+        this.camPitch = Math.max(-0.4, Math.min(1.2, this.camPitch + inp.lookDY * sens));
+      }
       this.body.setNextKinematicTranslation({ x: this.x, y: -500, z: this.z });
       this.syncState();
       this.streamer.focus = { x: this.x, z: this.z };

@@ -49,7 +49,18 @@ export interface PlotState {
   sawmillLevel: number;
   chests: Record<string, ItemStack[]>;
   texts: Record<string, string>;
-  businesses: Record<string, { level: number; stock: number; lastCollect: number }>;
+  businesses: Record<
+    string,
+    {
+      level: number;
+      stock: number;
+      lastCollect: number;
+      out?: Record<string, number>;
+      input?: Record<string, number>;
+      recipe?: string;
+      prog?: number;
+    }
+  >;
   outpost: { level: number; lastCollect: number };
 }
 
@@ -133,6 +144,9 @@ export interface Worker {
   wood: string;
   plot: string;
   efficiency: number;
+  stock: number;
+  owed: number;
+  lastMs: number;
 }
 
 export interface GameState {
@@ -164,6 +178,11 @@ export interface GameState {
     treasure: { x: number; z: number; found: boolean }[];
     nextUid: number;
     mutated: Record<string, string>;
+    outposts: Record<string, { level: number; lastMs: number; lastPlayed: number }>;
+    tollUntil: number;
+    boss: Record<string, number>;
+    events: { id: string; until: number; data?: any } | null;
+    nextEvent: number;
   };
   market: MarketState;
   plots: Record<string, PlotState>;
@@ -295,6 +314,11 @@ export function newGameState(name: string, seed: number): GameState {
       treasure: [],
       nextUid: 1,
       mutated: {},
+      outposts: {},
+      tollUntil: 0,
+      boss: {},
+      events: null,
+      nextEvent: 0,
     },
     market: { prices: {}, event: null, nextTick: 0, auctions: [], futures: [] },
     plots: {},

@@ -25,6 +25,15 @@ import type { WorldMap } from '../ui/worldMap';
 import type { PlotSystem } from '../systems/plots';
 import type { BuildingSystem } from '../systems/building';
 import type { VehicleSystem } from '../systems/vehicles';
+import type { WorldSystem } from '../systems/worldFeatures';
+import type { CraftingSystem } from '../systems/crafting';
+import type { ExchangeSystem } from '../systems/market2';
+import type { JobSystem } from '../systems/jobs';
+import type { WorkerSystem } from '../systems/workers';
+import type { BusinessSystem } from '../systems/businesses';
+import type { NodeSystem } from '../systems/nodes';
+import type { BossSystem } from '../systems/bosses';
+import type { AchievementSystem, PrestigeSystem, EventSystem, PetSystem } from '../systems/progression';
 
 export interface System {
   readonly name: string;
@@ -58,16 +67,27 @@ export class Sim {
   quests!: QuestSystem;
   biome!: BiomeSystem;
   worldMap: WorldMap | null = null;
-  jobs?: { render(): any };
-  fastTravel?: {
-    stations(): { id: string; x: number; z: number; unlocked: boolean }[];
-    nearestStation(x: number, z: number, r: number): { id: string } | null;
-    travel(id: string): boolean;
-  };
-  treasure?: { useMap(): boolean };
+  get fastTravel() {
+    return this.world;
+  }
+  get treasure() {
+    return this.nodes;
+  }
   plots!: PlotSystem;
   building!: BuildingSystem;
   vehicles!: VehicleSystem;
+  world!: WorldSystem;
+  crafting!: CraftingSystem;
+  exchange!: ExchangeSystem;
+  jobs!: JobSystem;
+  workers!: WorkerSystem;
+  businesses!: BusinessSystem;
+  nodes!: NodeSystem;
+  bosses!: BossSystem;
+  achievements!: AchievementSystem;
+  prestige!: PrestigeSystem;
+  events!: EventSystem;
+  pets!: PetSystem;
   private autosaveAcc = 0;
 
   constructor(

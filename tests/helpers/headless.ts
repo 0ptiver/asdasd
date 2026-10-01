@@ -42,6 +42,8 @@ export async function makeSim(
     settings: { ...DEFAULT_SETTINGS },
     input,
     save: async () => {},
+    closePanel: () => {},
+    openPanel: () => {},
     loop: { fps: 60 },
   };
   const sim = buildSim(game, state);

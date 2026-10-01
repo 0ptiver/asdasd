@@ -11,3 +11,4 @@ export * from './plots';
 export const QUESTS_ALL = STORY;
 export * from './quests';
 export * from './parts';
+export * from './achievements';

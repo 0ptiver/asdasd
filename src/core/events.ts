@@ -29,6 +29,8 @@ export interface GameEvents {
   'ui:close': { panel: string };
   level: { skill: string; level: number };
   prestige: { level: number };
+  'event:start': { id: string; text: string };
+  'event:end': { id: string };
 }
 
 type Handler<T> = (payload: T) => void;

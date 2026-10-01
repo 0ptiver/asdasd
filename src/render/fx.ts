@@ -197,6 +197,15 @@ export class Fx {
     }
   }
 
+  /** A ring of short-lived particles (boss telegraphs). */
+  ring(x: number, y: number, z: number, r: number, color: number): void {
+    const n = Math.min(48, Math.round(r * 3));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      this.emit('magic', x + Math.cos(a) * r, y, z + Math.sin(a) * r, 1, color);
+    }
+  }
+
   update(dt: number): void {
     let w = 0;
     for (let i = 0; i < this.n; i++) {

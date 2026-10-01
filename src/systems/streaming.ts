@@ -31,6 +31,8 @@ export class Streamer implements System {
   /** Positions streaming is centered on (player + vehicles). */
   focus: { x: number; z: number } = { x: 0, z: 0 };
   blocked: ((x: number, z: number) => boolean) | undefined;
+  /** extra trees injected into chunks (guardian trees) */
+  treeProviders: ((cx: number, cz: number) => Tree[])[] = [];
   private tick = 0;
 
   constructor(private sim: Sim) {
@@ -78,6 +80,7 @@ export class Streamer implements System {
       if (!any) skyHeights = null;
     }
     const trees = generateChunkTrees(t, cx, cz, this.blocked);
+    for (const p of this.treeProviders) trees.push(...p(cx, cz));
     const chunk: Chunk = { cx, cz, key, heights, skyHeights, trees, biome: mid, bodies: [] };
     this.buildColliders(chunk);
     this.loaded.set(key, chunk);

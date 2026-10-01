@@ -64,7 +64,12 @@ export class MarketSystem implements System {
   }
 
   itemPrice(id: string): number {
-    return Math.max(0, Math.round(baseItemValue(id) * this.itemMult(id) * this.bonus()));
+    return Math.max(
+      0,
+      Math.round(
+        baseItemValue(id) * this.itemMult(id) * this.bonus() * (this.sim.events?.sellMultiplier(id) ?? 1),
+      ),
+    );
   }
 
   /** Global multipliers: prestige, pet, etc. */

@@ -206,6 +206,13 @@ export class TreeSystem implements System {
     }
   }
 
+  /** Register a tree that was injected into an already-loaded chunk. */
+  addLoose(t: Tree): void {
+    this.trees.set(t.id, t);
+    if (!this.isGone(t)) this.gridAdd(t);
+    this.emit(t, 'add');
+  }
+
   isStanding(t: Tree): boolean {
     return !this.isGone(t);
   }

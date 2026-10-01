@@ -124,6 +124,16 @@ export const ITEMS: ItemDef[] = [
     icon: 'chest',
   }),
   o('door_item', 'Door', 'furniture', 0, 0x9a6a3a, 'Hinged door.', { stack: 50, icon: 'door' }),
+  // seasonal collectibles (exchange 10 at Ivy for a seasonal axe)
+  o('egg', 'Painted Egg', 'material', 40, 0xffb8e0, 'Spring-event collectible.', { stack: 99, icon: 'gem' }),
+  o('pumpkin', 'Pumpkin', 'material', 40, 0xff8a1a, 'Harvest-event collectible.', {
+    stack: 99,
+    icon: 'leaf',
+  }),
+  o('candy', 'Candy Cane', 'material', 40, 0xff4a5a, 'Winter-event collectible.', {
+    stack: 99,
+    icon: 'leaf',
+  }),
   // gear
   o('backpack_s', 'Small Backpack', 'gear', 800, 0x7a5a3a, '+10 inventory slots.', {
     stack: 1,

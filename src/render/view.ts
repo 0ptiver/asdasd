@@ -11,6 +11,8 @@ import { Human, makeAxeModel } from './models';
 import { LogRenderer } from './logRender';
 import { BuildRender } from './buildRender';
 import { VehicleRenderer } from './vehicleRender';
+import { LandmarkRender } from './landmarkRender';
+import { WeatherFx } from './weatherFx';
 import { isNight } from '../core/gameTime';
 import { Fx } from './fx';
 import { AXE_BY_ID, SKINS } from '../data/axes';
@@ -34,6 +36,8 @@ export class View {
   private logR: LogRenderer | null = null;
   private buildR: BuildRender | null = null;
   private vehR: VehicleRenderer | null = null;
+  private lmR: LandmarkRender | null = null;
+  private weather = new WeatherFx();
   private fx = new Fx();
   private heldKey = '';
   private hubR: HubRender | null = null;
@@ -107,9 +111,17 @@ export class View {
     this.world.add(this.treeR.group);
     this.logR = new LogRenderer(sim.logs, this.treeR);
     this.world.add(this.logR.group, this.fx.points);
-    this.unsub.push(sim.bus.on('fx', (e) => this.fx.emit(e.kind, e.x, e.y, e.z, e.n ?? 8, e.color)));
+    this.unsub.push(
+      sim.bus.on('fx', (e) =>
+        e.kind === 'ring'
+          ? this.fx.ring(e.x, e.y, e.z, e.n ?? 5, e.color ?? 0xffffff)
+          : this.fx.emit(e.kind, e.x, e.y, e.z, e.n ?? 8, e.color),
+      ),
+    );
     this.buildR = new BuildRender(sim);
     this.world.add(this.buildR.group);
+    this.lmR = new LandmarkRender(sim);
+    this.world.add(this.lmR.group, this.weather.points);
     this.vehR = new VehicleRenderer(sim);
     this.world.add(this.vehR.group);
     this.hubR = new HubRender(sim.hub.layout);
@@ -154,6 +166,8 @@ export class View {
       this.world.remove(this.buildR.group);
     }
     this.buildR = null;
+    if (this.lmR) this.world.remove(this.lmR.group, this.weather.points);
+    this.lmR = null;
     if (this.vehR) this.world.remove(this.vehR.group);
     this.vehR = null;
     if (this.playerModel) this.world.remove(this.playerModel.root);
@@ -268,6 +282,8 @@ export class View {
     this.hubR?.update(this.time, sim.sawmill.sawing);
     this.logR?.update();
     this.buildR?.update(dt);
+    this.lmR?.update(dt);
+    this.weather.update(dt, st.weather.kind, this.camera.position, this.env.daylight, this.env.indoor);
     this.vehR?.update(
       dt,
       (k, x, y, z, n, c) => this.fx.emit(k, x, y, z, n, c),

@@ -7,6 +7,8 @@ import { HUB } from '../world/layout';
 import type { Streamer } from './streaming';
 
 export interface Interactable extends InteractPoint {
+  /** added to distance when choosing the nearest (low-priority prompts) */
+  prio?: number;
   npc?: NpcDef;
   y: number;
 }
@@ -20,6 +22,8 @@ export class HubSystem implements System {
   /** dynamic interactables (built parts) */
   extra: Interactable[] = [];
   extraVeh: Interactable[] = [];
+  extraWorld: Interactable[] = [];
+  extraNodes: Interactable[] = [];
   private bodies: RAPIER.RigidBody[] = [];
 
   constructor(
@@ -87,10 +91,17 @@ export class HubSystem implements System {
     const p = this.sim.player;
     let best: Interactable | null = null;
     let bd = Infinity;
-    for (const it of [...this.interactables, ...this.extra, ...this.extraVeh]) {
+    for (const it of [
+      ...this.interactables,
+      ...this.extra,
+      ...this.extraVeh,
+      ...this.extraWorld,
+      ...this.extraNodes,
+    ]) {
       const d = Math.hypot(it.x - p.x, it.z - p.z);
-      if (d < it.radius && d < bd) {
-        bd = d;
+      const score = d + (it.prio ?? 0);
+      if (d < it.radius && score < bd) {
+        bd = score;
         best = it;
       }
     }

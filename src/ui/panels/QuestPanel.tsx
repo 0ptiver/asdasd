@@ -2,10 +2,10 @@ import { useState } from 'preact/hooks';
 import { game, useGame, money } from '../hooks';
 import { Panel } from '../Panel';
 import { STORY } from '../../data/quests';
+import { JobsTab } from './JobsTab';
 
 export function QuestPanel() {
   useGame();
-  const sim = game.sim!;
   const st = game.state!;
   const [tab, setTab] = useState<'story' | 'daily' | 'jobs'>('story');
   return (
@@ -68,8 +68,7 @@ export function QuestPanel() {
               ))}
           </div>
         )}
-        {tab === 'jobs' &&
-          (sim.jobs ? sim.jobs.render() : <div class="desc">The job board is empty today.</div>)}
+        {tab === 'jobs' && <JobsTab />}
       </div>
     </Panel>
   );

@@ -240,6 +240,10 @@ export class ChoppingSystem implements System {
 
   private fell(t: Tree, axe: import('../save/schema').AxeInst | null, _splash: boolean): void {
     const sim = this.sim;
+    if (t.guardian) {
+      sim.bosses.kill(t);
+      return;
+    }
     const st = sim.state;
     const def = axe ? AXE_BY_ID[axe.def] : null;
     let respawnMult = 1;

@@ -7,6 +7,23 @@ export const BRIDGE_Z = -40;
 export const BRIDGE = { x: riverX(BRIDGE_Z), z: BRIDGE_Z, halfLen: 26, width: 9, y: 4.2 };
 export const DOCK = { x: riverX(66) - 27, z: 66 };
 
+/** Canal linking the river to the Tropic Isles; also the ferry route (river course + canal). */
+export const CANAL: [number, number][] = (() => {
+  const r = riverX(760);
+  return [
+    [r, 760],
+    [r + 140, 800],
+    [r + 380, 840],
+    [r + 560, 880],
+    [840, 880],
+  ];
+})();
+export const FERRY_ROUTE: [number, number][] = (() => {
+  const pts: [number, number][] = [];
+  for (let z = DOCK.z + 20; z < 760; z += 40) pts.push([riverX(z), z]);
+  return [...pts, ...CANAL];
+})();
+
 /** Airfield: runway along x, flattened by the terrain generator. */
 export const AIRFIELD = { x: -230, z: 130, hx: 80, hz: 18 };
 /** Extra axis-aligned zones the terrain flattens (besides plots and the hub). */

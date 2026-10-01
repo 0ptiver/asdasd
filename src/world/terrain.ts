@@ -6,7 +6,7 @@ import { CONFIG } from '../config';
 import { fbm, noise2 } from '../core/rng';
 import { BIOMES, BIOME_BY_ID } from '../data/biomes';
 import { PLOTS } from '../data/plots';
-import { HUB, riverX, RIVER_WIDTH, BRIDGE_Z, BRIDGE, DOCK, FLAT_ZONES } from './layout';
+import { HUB, riverX, RIVER_WIDTH, BRIDGE_Z, BRIDGE, DOCK, FLAT_ZONES, CANAL } from './layout';
 import type { BiomeDef, BiomeId } from '../data/types';
 
 export const SEA_LEVEL = 0;
@@ -107,6 +107,23 @@ export function roadDist(x: number, z: number): number {
   return best;
 }
 export const ROAD_HALF = 4.2;
+export function canalDist(x: number, z: number): number {
+  let best = 1e9;
+  for (let i = 0; i < CANAL.length - 1; i++) {
+    const a = CANAL[i]!;
+    const b = CANAL[i + 1]!;
+    if (
+      x < Math.min(a[0], b[0]) - 40 ||
+      x > Math.max(a[0], b[0]) + 40 ||
+      z < Math.min(a[1], b[1]) - 40 ||
+      z > Math.max(a[1], b[1]) + 40
+    )
+      continue;
+    const d = segDist(x, z, a, b);
+    if (d < best) best = d;
+  }
+  return best;
+}
 export function railDist(x: number, z: number): number {
   let best = 1e9;
   for (let i = 0; i < RAIL.length - 1; i++) {
@@ -243,7 +260,7 @@ export class Terrain {
 
   private plotBase = new Map<string, number>();
   /** Max half-extent growth from expansions (kept in sync with PlotSystem). */
-  static readonly PLOT_GROW = 24;
+  static readonly PLOT_GROW = 10;
 
   /** Height with plots flattened for building. */
   heightAt(x: number, z: number): number {
@@ -266,13 +283,13 @@ export class Terrain {
       const hz = p.size[1] / 2 + Terrain.PLOT_GROW;
       const dx = Math.abs(x - p.center[0]);
       const dz = Math.abs(z - p.center[1]);
-      if (dx > hx + 14 || dz > hz + 14) continue;
+      if (dx > hx + 10 || dz > hz + 10) continue;
       let base = this.plotBase.get(p.id);
       if (base === undefined) {
         base = this.rawHeight(p.center[0], p.center[1]);
         this.plotBase.set(p.id, base);
       }
-      const k = (1 - smoothstep(0, 14, dx - hx)) * (1 - smoothstep(0, 14, dz - hz));
+      const k = (1 - smoothstep(0, 10, dx - hx)) * (1 - smoothstep(0, 10, dz - hz));
       return lerp(h, base, k);
     }
     return h;
@@ -308,6 +325,23 @@ export class Terrain {
       const bank = 1 - smoothstep(RIVER_WIDTH * 0.45, RIVER_WIDTH * 2.4, rdv);
       const bed = -2.8 + (fbm(x * 0.05, z * 0.05, this.seed + 3, 2) - 0.5);
       h = lerp(h, Math.min(h, bed), bank);
+    }
+    // bridge abutments: raise the approach so it meets the deck
+    {
+      const bdx = Math.abs(x - BRIDGE.x) - BRIDGE.halfLen;
+      const bdz = Math.abs(z - BRIDGE.z);
+      if (bdx > -2 && bdx < 20 && bdz < BRIDGE.width / 2 + 9) {
+        const k =
+          (1 - smoothstep(0, 20, Math.max(0, bdx))) *
+          (1 - smoothstep(BRIDGE.width / 2 + 1, BRIDGE.width / 2 + 9, bdz));
+        h = lerp(h, Math.max(h, BRIDGE.y - 0.08), k);
+      }
+    }
+    // canal to the isles
+    const cd = canalDist(x, z);
+    if (cd < 34) {
+      const k = 1 - smoothstep(7, 33, cd);
+      h = lerp(h, Math.min(h, -3.2), k);
     }
     // world edge -> ocean
     const edge = Math.max(Math.abs(x), Math.abs(z));

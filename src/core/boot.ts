@@ -21,6 +21,15 @@ import { BiomeSystem } from '../systems/biomeSystem';
 import { PlotSystem } from '../systems/plots';
 import { BuildingSystem } from '../systems/building';
 import { VehicleSystem } from '../systems/vehicles';
+import { WorldSystem } from '../systems/worldFeatures';
+import { CraftingSystem } from '../systems/crafting';
+import { ExchangeSystem } from '../systems/market2';
+import { JobSystem } from '../systems/jobs';
+import { WorkerSystem } from '../systems/workers';
+import { BusinessSystem } from '../systems/businesses';
+import { NodeSystem } from '../systems/nodes';
+import { BossSystem } from '../systems/bosses';
+import { AchievementSystem, PrestigeSystem, EventSystem, PetSystem } from '../systems/progression';
 
 /** Assembles all simulation systems in dependency order. */
 export function buildSim(game: Game, state: GameState): Sim {
@@ -44,6 +53,18 @@ export function buildSim(game: Game, state: GameState): Sim {
   sim.biome = sim.add(new BiomeSystem(sim));
   sim.building = sim.add(new BuildingSystem(sim));
   sim.vehicles = sim.add(new VehicleSystem(sim));
+  sim.world = sim.add(new WorldSystem(sim));
+  sim.crafting = sim.add(new CraftingSystem(sim));
+  sim.exchange = sim.add(new ExchangeSystem(sim));
+  sim.jobs = sim.add(new JobSystem(sim));
+  sim.workers = sim.add(new WorkerSystem(sim));
+  sim.businesses = sim.add(new BusinessSystem(sim));
+  sim.nodes = sim.add(new NodeSystem(sim));
+  sim.bosses = sim.add(new BossSystem(sim));
+  sim.achievements = sim.add(new AchievementSystem(sim));
+  sim.prestige = sim.add(new PrestigeSystem(sim));
+  sim.events = sim.add(new EventSystem(sim));
+  sim.pets = sim.add(new PetSystem(sim));
   sim.add(new ControlsSystem(sim));
   return sim;
 }
