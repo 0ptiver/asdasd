@@ -173,7 +173,7 @@ export class CrewRender {
         this.group.add(h.root);
         const stump = new THREE.Mesh(
           new THREE.CylinderGeometry(0.5, 0.6, 0.6, 8),
-          new THREE.MeshLambertMaterial({ color: 0x7a5230, flatShading: true }),
+          new THREE.MeshStandardMaterial({ color: 0x7a5230, flatShading: true }),
         );
         stump.position.set(0, 0.3, 0.9);
         h.root.add(stump);
@@ -212,7 +212,7 @@ export class CrewRender {
           .box(0.06, 0.06, 0.02, -0.1, 0.6, 0.69, 0x111111);
         const mesh = new THREE.Mesh(
           prims.build(),
-          new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
+          new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true }),
         );
         this.pet = new THREE.Group();
         this.pet.add(mesh);

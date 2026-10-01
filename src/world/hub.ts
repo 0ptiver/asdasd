@@ -200,7 +200,9 @@ class Struct {
     }
   }
   lamp(x: number, y: number, z: number): void {
-    this.cyl(x, y, z, 0.1, 3.4, 0x2a2a30, 6);
+    this.cyl(x, y, z, 0.13, 0.5, 0x56606c, 8);
+    this.cyl(x, y + 0.4, z, 0.08, 3.1, 0x66727e, 8);
+    this.cyl(x, y + 3.35, z, 0.2, 0.12, 0x56606c, 8);
     this.parts.push({ t: 'sphere', x, y: y + 3.6, z, r: 0.28, c: 0xffe39a });
     this.lamps.push({ x, y: y + 3.6, z });
   }

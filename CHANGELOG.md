@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — visual polish
+- Fixed eye-strain: removed camera follow lag, render now interpolates player position and look direction between 60 Hz sim ticks, bloom is off by default.
+- PBR materials with smooth shading, ACES tone mapping, baked AO and procedural surface detail; paving tiles and plank siding on town buildings.
+- Instanced grass tufts, flowers and rocks per chunk; rounder characters with faces and hair; sturdier lamp posts.
+- UI restyle: glass panels, pill tabs, gradient bars, refined buttons and hotbar.
+
 ## 0.9.0 — full feature pass
 
 - **Foundation** — Vite + TypeScript (strict) + Preact; fixed-timestep sim decoupled from rendering; typed event bus; lightweight ECS; versioned IndexedDB saves (3 slots, migrations, autosave 30 s, JSON import/export); loading screen; themed UI shell.

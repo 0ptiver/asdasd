@@ -56,9 +56,9 @@ export class LogRenderer {
     const col = this.trees.colorsOf(t as any);
     const trunk = new THREE.Mesh(
       geo.trunk,
-      new THREE.MeshLambertMaterial({
+      new THREE.MeshStandardMaterial({
         vertexColors: true,
-        flatShading: true,
+        roughness: 0.85,
         color: col.trunk,
         emissive: col.trunk,
         emissiveIntensity: col.glowT * 0.5,
@@ -69,9 +69,9 @@ export class LogRenderer {
     if (geo.foliage) {
       const leaf = new THREE.Mesh(
         geo.foliage,
-        new THREE.MeshLambertMaterial({
+        new THREE.MeshStandardMaterial({
           vertexColors: true,
-          flatShading: true,
+          roughness: 0.85,
           color: col.leaf,
           emissive: col.leaf,
           emissiveIntensity: col.glowL * 0.5,

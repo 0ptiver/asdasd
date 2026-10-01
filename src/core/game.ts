@@ -332,9 +332,14 @@ export class Game {
     const sim = this.sim;
     if (sim && !this.loop.paused) {
       this.music.update(fdt, {
-        biome: sim.biome.current.id, daylight: daylight(sim.state.time), weather: sim.state.weather.kind,
-        indoor: this.view?.indoor ?? 0, combat: !!sim.bosses.engaged, speed: Math.hypot(sim.player.vx, sim.player.vz) + Math.abs(sim.vehicles.current?.speed ?? 0),
-        musicVol: this.settings.music, ambVol: this.settings.ambience,
+        biome: sim.biome.current.id,
+        daylight: daylight(sim.state.time),
+        weather: sim.state.weather.kind,
+        indoor: this.view?.indoor ?? 0,
+        combat: !!sim.bosses.engaged,
+        speed: Math.hypot(sim.player.vx, sim.player.vz) + Math.abs(sim.vehicles.current?.speed ?? 0),
+        musicVol: this.settings.music,
+        ambVol: this.settings.ambience,
       });
     }
     this.bump();

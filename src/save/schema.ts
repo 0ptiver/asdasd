@@ -256,7 +256,7 @@ export const DEFAULT_KEYS: Record<string, string> = {
 export const DEFAULT_SETTINGS: Settings = {
   quality: 'medium',
   shadows: true,
-  bloom: true,
+  bloom: false,
   ssao: false,
   reducedMotion: false,
   colorblind: 'none',

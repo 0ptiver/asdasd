@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { addDetailNoise } from './prims';
+import { buildScatter } from './scatter';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
@@ -37,7 +39,10 @@ export class View {
   private world = new THREE.Group();
   private env!: Environment;
   private water!: Water;
-  private terrainMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  private terrainMat = addDetailNoise(
+    new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }),
+    0.34,
+  );
   private chunkMeshes = new Map<string, THREE.Object3D[]>();
   private treeR: TreeRenderer | null = null;
   private logR: LogRenderer | null = null;
@@ -57,6 +62,8 @@ export class View {
   private camPos = new THREE.Vector3();
   private shake = 0;
   private unsub: (() => void)[] = [];
+  private scatter = new Set<THREE.Group>();
+  private scatterT = 0;
   private composer: EffectComposer | null = null;
   private composerKey = '';
   private bloom: UnrealBloomPass | null = null;
@@ -72,6 +79,8 @@ export class View {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.scene.add(this.idle, this.world);
     this.env = new Environment(this.scene);
@@ -110,12 +119,21 @@ export class View {
         this.world.add(sky);
         objs.push(sky);
       }
+      const sc = buildScatter(c, st.terrain, this.game.settings.quality === 'low' ? 0.5 : 1);
+      if (sc) {
+        sc.userData.c = [c.cx, c.cz];
+        this.scatter.add(sc);
+        this.world.add(sc);
+        objs.push(sc);
+      }
       this.chunkMeshes.set(c.key, objs);
     };
     const removeChunk = (c: Chunk) => {
       for (const o of this.chunkMeshes.get(c.key) ?? []) {
         this.world.remove(o);
-        (o as THREE.Mesh).geometry.dispose();
+        this.scatter.delete(o as THREE.Group);
+        if (o instanceof THREE.Group) for (const ch of o.children) (ch as THREE.InstancedMesh).dispose();
+        else (o as THREE.Mesh).geometry.dispose();
       }
       this.chunkMeshes.delete(c.key);
     };
@@ -175,7 +193,9 @@ export class View {
     for (const objs of this.chunkMeshes.values())
       for (const o of objs) {
         this.world.remove(o);
-        (o as THREE.Mesh).geometry.dispose();
+        this.scatter.delete(o as THREE.Group);
+        if (o instanceof THREE.Group) for (const ch of o.children) (ch as THREE.InstancedMesh).dispose();
+        else (o as THREE.Mesh).geometry.dispose();
       }
     this.chunkMeshes.clear();
     if (this.treeR) this.world.remove(this.treeR.group);
@@ -227,7 +247,8 @@ export class View {
     }
     if (this.composer && this.composerKey === key) return this.composer;
     try {
-      const w = window.innerWidth, h = window.innerHeight;
+      const w = window.innerWidth,
+        h = window.innerHeight;
       const c = new EffectComposer(this.renderer);
       c.setSize(w, h);
       c.addPass(new RenderPass(this.scene, this.camera));
@@ -256,6 +277,45 @@ export class View {
     }
   }
 
+  private ipPrev = { x: 0, y: 0, z: 0, yaw: 0, camYaw: 0, camPitch: 0, camDist: 6.5 };
+  private ipCur = { ...this.ipPrev };
+  private ipTick = -1;
+  private interp(sim: Sim, alpha: number) {
+    const p = sim.player;
+    if (sim.tickCount !== this.ipTick) {
+      const jump =
+        this.ipTick < 0 ||
+        Math.hypot(p.x - this.ipCur.x, p.z - this.ipCur.z) > 20 ||
+        Math.abs(p.y - this.ipCur.y) > 20;
+      this.ipPrev = jump
+        ? { x: p.x, y: p.y, z: p.z, yaw: p.yaw, camYaw: p.camYaw, camPitch: p.camPitch, camDist: p.camDist }
+        : this.ipCur;
+      this.ipCur = {
+        x: p.x,
+        y: p.y,
+        z: p.z,
+        yaw: p.yaw,
+        camYaw: p.camYaw,
+        camPitch: p.camPitch,
+        camDist: p.camDist,
+      };
+      this.ipTick = sim.tickCount;
+    }
+    const a = Math.max(0, Math.min(1, alpha));
+    const A = this.ipPrev,
+      B = this.ipCur;
+    const ang = (u: number, v: number) => u + Math.atan2(Math.sin(v - u), Math.cos(v - u)) * a;
+    return {
+      x: A.x + (B.x - A.x) * a,
+      y: A.y + (B.y - A.y) * a,
+      z: A.z + (B.z - A.z) * a,
+      yaw: ang(A.yaw, B.yaw),
+      camYaw: ang(A.camYaw, B.camYaw),
+      camPitch: A.camPitch + (B.camPitch - A.camPitch) * a,
+      camDist: A.camDist + (B.camDist - A.camDist) * a,
+    };
+  }
+
   resize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -275,29 +335,32 @@ export class View {
     }
     const p = sim.player;
     const st = sim.state;
+    // ---- interpolate sim state between 60 Hz ticks so motion/look stays smooth at any refresh rate
+    const ip = this.interp(sim, _alpha);
     // ---- camera
     const curV = sim.vehicles.current;
     const headOff = curV ? Math.max(1.8, curV.def.size[1] * 0.7 + 1.2) : 1.7;
-    const head = new THREE.Vector3(p.x, p.y + headOff, p.z);
-    const cp = Math.cos(p.camPitch);
-    const sp = Math.sin(p.camPitch);
-    const fwd = new THREE.Vector3(-Math.sin(p.camYaw) * cp, -sp, -Math.cos(p.camYaw) * cp);
-    const dist = p.camDist;
+    const head = new THREE.Vector3(ip.x, ip.y + headOff, ip.z);
+    const camYaw = ip.camYaw;
+    const cp = Math.cos(ip.camPitch);
+    const sp = Math.sin(ip.camPitch);
+    const fwd = new THREE.Vector3(-Math.sin(camYaw) * cp, -sp, -Math.cos(camYaw) * cp);
+    const dist = ip.camDist;
     const wantPos = head
       .clone()
       .addScaledVector(fwd, -dist)
-      .add(new THREE.Vector3(Math.cos(p.camYaw) * 0.5, 0.3, -Math.sin(p.camYaw) * 0.5));
+      .add(new THREE.Vector3(Math.cos(camYaw) * 0.5, 0.3, -Math.sin(camYaw) * 0.5));
     const gh = sim.streamer.terrain.surfaceAt(wantPos.x, wantPos.z, p.y) + 0.7;
     if (wantPos.y < gh) wantPos.y = gh;
-    this.camPos.lerp(wantPos, 1 - Math.exp(-dt * 25));
-    if (this.camPos.distanceTo(wantPos) > 30) this.camPos.copy(wantPos);
+    // rigid follow: no trailing/lag (smoothing here reads as motion blur and causes eye strain)
+    this.camPos.copy(wantPos);
     this.camera.position.copy(this.camPos);
     if (this.shake > 0 && !this.game.settings.reducedMotion) {
       this.camera.position.x += (Math.random() - 0.5) * this.shake * 0.5;
       this.camera.position.y += (Math.random() - 0.5) * this.shake * 0.5;
     }
     this.shake = Math.max(0, this.shake - dt * 2.5);
-    this.camera.lookAt(head.x + Math.cos(p.camYaw) * 0.5, head.y - 0.1, head.z - Math.sin(p.camYaw) * 0.5);
+    this.camera.lookAt(head.x + Math.cos(camYaw) * 0.5, head.y - 0.1, head.z - Math.sin(camYaw) * 0.5);
 
     const dbg = (window as any).__cam;
     if (dbg) {
@@ -312,7 +375,7 @@ export class View {
         dt,
         blend,
         st.time,
-        new THREE.Vector3(p.x, p.y, p.z),
+        new THREE.Vector3(ip.x, ip.y, ip.z),
         !!st.gear.head && st.gear.head === 'headlamp',
         st.weather.kind,
         this.camera.position.y,
@@ -335,8 +398,8 @@ export class View {
     // ---- models
     if (this.playerModel) {
       const m = this.playerModel;
-      m.root.position.set(p.x, p.y, p.z);
-      m.root.rotation.y = p.yaw;
+      m.root.position.set(ip.x, ip.y, ip.z);
+      m.root.rotation.y = ip.yaw;
       m.animate(dt, p.moveSpeed, p.swing >= 0 ? p.swing : -1, false, p.swimming);
     }
     for (const n of this.npcModels) {
@@ -372,6 +435,16 @@ export class View {
         m.rotation.x = Math.PI / 2 - 0.5;
         this.playerModel.setHeld(m);
       } else this.playerModel.setHeld(null);
+    }
+    this.scatterT -= dt;
+    if (this.scatterT <= 0) {
+      this.scatterT = 0.4;
+      const pcx = Math.floor(ip.x / CONFIG.chunkSize);
+      const pcz = Math.floor(ip.z / CONFIG.chunkSize);
+      for (const g of this.scatter) {
+        const c = g.userData.c as [number, number];
+        g.visible = Math.abs(c[0] - pcx) <= 2 && Math.abs(c[1] - pcz) <= 2;
+      }
     }
     this.treeR?.update(dt, p.x, p.z);
     const comp = this.ensureComposer();

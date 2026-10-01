@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { HubLayout, PartDesc, SignDesc } from '../world/hub';
-import { Prims, propMaterial } from './prims';
+import { Prims, propMaterial, hubMaterial } from './prims';
 
 function signTexture(s: SignDesc): THREE.CanvasTexture {
   const cv = document.createElement('canvas');
@@ -36,7 +36,7 @@ export class HubRender {
   constructor(layout: HubLayout) {
     const p = new Prims();
     for (const d of layout.parts) this.addPart(p, d);
-    const mesh = new THREE.Mesh(p.build(), propMaterial());
+    const mesh = new THREE.Mesh(p.build(), hubMaterial());
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     this.group.add(mesh);
@@ -53,7 +53,7 @@ export class HubRender {
     const intake = layout.sawIntake;
     const blade = new THREE.Mesh(
       new THREE.CylinderGeometry(1.25, 1.25, 0.1, 24),
-      new THREE.MeshLambertMaterial({ color: 0xdfe6ee, flatShading: true }),
+      new THREE.MeshStandardMaterial({ color: 0xdfe6ee, flatShading: true }),
     );
     blade.rotation.z = Math.PI / 2;
     blade.position.set(intake.x + 12.6 + 0.1, intake.y + 0.2, intake.z);

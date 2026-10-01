@@ -39,7 +39,13 @@ export class LogicSystem implements System {
     if (this.tick % 60 === 1) {
       this.logicPlots.clear();
       for (const [id, st] of Object.entries(this.sim.state.plots)) {
-        if (st.wires?.length || st.parts.some((p) => p[0] === 'piston' || p[0] === 'conveyor' || p[0] === 'timer' || p[0] === 'sensor')) this.logicPlots.add(id);
+        if (
+          st.wires?.length ||
+          st.parts.some(
+            (p) => p[0] === 'piston' || p[0] === 'conveyor' || p[0] === 'timer' || p[0] === 'sensor',
+          )
+        )
+          this.logicPlots.add(id);
       }
     }
     const sim = this.sim;

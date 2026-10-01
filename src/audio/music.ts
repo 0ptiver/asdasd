@@ -9,8 +9,20 @@ const SCALES: Record<string, number[]> = {
   pent: [0, 2, 4, 7, 9],
 };
 const MODE: Record<string, string> = {
-  meadow: 'major', birchwood: 'dorian', cherry: 'lydian', redwood: 'dorian', swamp: 'phrygian', goldbasin: 'major', volcano: 'phrygian', taiga: 'minor',
-  tropics: 'pent', crystal: 'lydian', deepcave: 'phrygian', desert: 'phrygian', haunted: 'minor', sky: 'lydian',
+  meadow: 'major',
+  birchwood: 'dorian',
+  cherry: 'lydian',
+  redwood: 'dorian',
+  swamp: 'phrygian',
+  goldbasin: 'major',
+  volcano: 'phrygian',
+  taiga: 'minor',
+  tropics: 'pent',
+  crystal: 'lydian',
+  deepcave: 'phrygian',
+  desert: 'phrygian',
+  haunted: 'minor',
+  sky: 'lydian',
 };
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -172,7 +184,20 @@ export class MusicManager {
     o.stop(now + 0.2);
   }
 
-  update(dt: number, p: { biome: string; daylight: number; weather: string; indoor: number; combat: boolean; speed: number; musicVol: number; ambVol: number; underwater?: boolean }): void {
+  update(
+    dt: number,
+    p: {
+      biome: string;
+      daylight: number;
+      weather: string;
+      indoor: number;
+      combat: boolean;
+      speed: number;
+      musicVol: number;
+      ambVol: number;
+      underwater?: boolean;
+    },
+  ): void {
     if (!this.ready && !this.init()) return;
     const ctx = this.ctx!;
     const now = ctx.currentTime;
@@ -190,17 +215,29 @@ export class MusicManager {
     this.padFilter.frequency.setTargetAtTime(500 + day * 900 + (p.combat ? 700 : 0), now, 1);
     this.ambGain.gain.setTargetAtTime(p.ambVol, now, 0.5);
     // ambience mix
-    const windy = ['taiga', 'sky', 'desert', 'goldbasin', 'cherry'].includes(p.biome) ? 0.35 : p.indoor > 0.5 ? 0.05 : 0.14;
+    const windy = ['taiga', 'sky', 'desert', 'goldbasin', 'cherry'].includes(p.biome)
+      ? 0.35
+      : p.indoor > 0.5
+        ? 0.05
+        : 0.14;
     const storm = p.weather === 'blizzard' || p.weather === 'sandstorm' ? 0.6 : 0;
     this.windGain.gain.setTargetAtTime(Math.min(0.8, windy + storm + p.speed * 0.01), now, 0.8);
     this.windFilter.frequency.setTargetAtTime(storm ? 900 : 400 + p.speed * 20, now, 0.8);
     const rain = p.weather === 'rain' || p.weather === 'storm' ? 0.32 : p.weather === 'ash' ? 0.12 : 0;
     this.rainGain.gain.setTargetAtTime(rain * (1 - p.indoor), now, 1);
-    this.rumbleGain.gain.setTargetAtTime(p.biome === 'volcano' ? 0.9 : p.biome === 'deepcave' ? 0.5 : 0, now, 1.5);
+    this.rumbleGain.gain.setTargetAtTime(
+      p.biome === 'volcano' ? 0.9 : p.biome === 'deepcave' ? 0.5 : 0,
+      now,
+      1.5,
+    );
     this.nextAmbient -= dt;
     if (this.nextAmbient <= 0) {
       this.nextAmbient = 0.4 + Math.random() * 2.4;
-      const birdy = ['meadow', 'birchwood', 'cherry', 'redwood', 'tropics'].includes(p.biome) && day > 0.5 && p.weather === 'clear' && p.indoor < 0.3;
+      const birdy =
+        ['meadow', 'birchwood', 'cherry', 'redwood', 'tropics'].includes(p.biome) &&
+        day > 0.5 &&
+        p.weather === 'clear' &&
+        p.indoor < 0.3;
       if (birdy && Math.random() < 0.8) this.chirp();
       if (p.indoor > 0.5 && Math.random() < 0.3) this.drip();
     }
@@ -215,7 +252,8 @@ export class MusicManager {
     }
     this.nextPluck -= dt;
     if (this.nextPluck <= 0) {
-      this.nextPluck = (p.combat ? 0.4 : 1.6) + Math.random() * (p.combat ? 0.5 : 3.2) * (day < 0.3 ? 1.6 : 1);
+      this.nextPluck =
+        (p.combat ? 0.4 : 1.6) + Math.random() * (p.combat ? 0.5 : 3.2) * (day < 0.3 ? 1.6 : 1);
       this.pluck(root, mode, 0.5 + day * 0.7);
     }
   }
@@ -236,7 +274,22 @@ export class MusicManager {
   }
 
   private biomeKey(id: string): number {
-    const keys: Record<string, number> = { meadow: 0, birchwood: 2, cherry: 4, redwood: 7, swamp: 9, goldbasin: 5, volcano: 1, taiga: 3, tropics: 0, crystal: 8, deepcave: 6, desert: 10, haunted: 11, sky: 7 };
+    const keys: Record<string, number> = {
+      meadow: 0,
+      birchwood: 2,
+      cherry: 4,
+      redwood: 7,
+      swamp: 9,
+      goldbasin: 5,
+      volcano: 1,
+      taiga: 3,
+      tropics: 0,
+      crystal: 8,
+      deepcave: 6,
+      desert: 10,
+      haunted: 11,
+      sky: 7,
+    };
     return keys[id] ?? 0;
   }
 }

@@ -1,11 +1,17 @@
 import * as THREE from 'three';
+import { addDetailNoise } from './prims';
 
-let glowMat: THREE.MeshLambertMaterial | null = null;
-/** Lambert vertex-color material that supports a per-instance `aGlow` emissive factor. */
-export function glowMaterial(): THREE.MeshLambertMaterial {
+let glowMat: THREE.MeshStandardMaterial | null = null;
+/** PBR vertex-color material that supports a per-instance `aGlow` emissive factor. */
+export function glowMaterial(): THREE.MeshStandardMaterial {
   if (glowMat) return glowMat;
-  const m = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
-  m.onBeforeCompile = (sh) => {
+  const m = addDetailNoise(
+    new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0.02 }),
+    0.3,
+  );
+  const detail = m.onBeforeCompile;
+  m.onBeforeCompile = (sh, r) => {
+    detail.call(m, sh, r);
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nattribute float aGlow;\nvarying float vGlow;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGlow = aGlow;');
@@ -16,6 +22,7 @@ export function glowMaterial(): THREE.MeshLambertMaterial {
         '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vGlow;',
       );
   };
+  m.customProgramCacheKey = () => 'detail-glow';
   glowMat = m;
   return m;
 }

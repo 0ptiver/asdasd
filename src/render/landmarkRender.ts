@@ -29,7 +29,7 @@ export class LandmarkRender {
       g.computeVertexNormals();
       const m = new THREE.Mesh(
         g,
-        new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, side: THREE.DoubleSide }),
+        new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide }),
       );
       m.receiveShadow = true;
       this.group.add(m);

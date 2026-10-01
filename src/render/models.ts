@@ -34,35 +34,51 @@ export class Human {
       const m = meshOf(p, true, false);
       return m;
     };
+    const hair = o.hair ?? 0x5a3a20;
+    const belt = 0x3a2a1a;
     this.torso = part(
-      new Prims().box(0.56, 0.7, 0.3, 0, 0, 0, o.shirt).box(0.58, 0.1, 0.32, 0, -0.3, 0, 0x3a2a1a),
+      new Prims()
+        .cyl(0.27, 0.23, 0.72, 10, 0, 0, 0, o.shirt, undefined, 1)
+        .sphere(0.17, -0.27, 0.3, 0, o.shirt, [1.1, 0.9, 1], 1)
+        .sphere(0.17, 0.27, 0.3, 0, o.shirt, [1.1, 0.9, 1], 1)
+        .cyl(0.245, 0.245, 0.09, 10, 0, -0.3, 0, belt)
+        .box(0.1, 0.1, 0.03, 0, -0.3, 0.235, 0xd9b44a)
+        .cyl(0.08, 0.09, 0.1, 8, 0, 0.4, 0, skin),
     );
-    if (o.apron) this.torso.add(part(new Prims().box(0.46, 0.5, 0.04, 0, -0.1, 0.17, o.apron)));
+    if (o.apron) this.torso.add(part(new Prims().box(0.4, 0.5, 0.04, 0, -0.1, 0.22, o.apron)));
     this.torso.position.y = 1.2;
-    const hp = new Prims().box(0.34, 0.34, 0.34, 0, 0, 0, skin);
-    hp.box(0.06, 0.06, 0.02, -0.08, 0.02, 0.175, 0x222222).box(0.06, 0.06, 0.02, 0.08, 0.02, 0.175, 0x222222);
-    if (o.beard) hp.box(0.3, 0.16, 0.08, 0, -0.14, 0.14, o.hair ?? 0x5a3a20);
-    hp.box(0.36, 0.1, 0.36, 0, 0.19, 0, o.hair ?? 0x5a3a20);
-    if (o.hat != null) hp.box(0.4, 0.13, 0.4, 0, 0.25, 0, o.hat).box(0.4, 0.04, 0.2, 0, 0.2, 0.28, o.hat);
+    const hp = new Prims().sphere(0.2, 0, 0, 0, skin, [1, 1.08, 1], 2);
+    hp.sphere(0.04, -0.075, 0.02, 0.17, 0xfaf6ee, [1, 1.1, 0.6], 1)
+      .sphere(0.04, 0.075, 0.02, 0.17, 0xfaf6ee, [1, 1.1, 0.6], 1)
+      .sphere(0.022, -0.075, 0.02, 0.2, 0x1b1b22, undefined, 0)
+      .sphere(0.022, 0.075, 0.02, 0.2, 0x1b1b22, undefined, 0)
+      .sphere(0.04, 0, -0.04, 0.2, skin, [0.8, 1, 1], 1)
+      .sphere(0.035, -0.2, 0, 0, skin, [0.6, 1, 1], 1)
+      .sphere(0.035, 0.2, 0, 0, skin, [0.6, 1, 1], 1);
+    if (o.beard) hp.sphere(0.17, 0, -0.1, 0.06, hair, [1, 0.8, 0.9], 1);
+    hp.sphere(0.215, 0, 0.05, -0.03, hair, [1, 0.85, 1.02], 1);
+    if (o.hat != null) {
+      hp.cyl(0.26, 0.26, 0.035, 14, 0, 0.13, 0, o.hat).cyl(0.17, 0.2, 0.17, 12, 0, 0.22, 0, o.hat);
+      hp.cyl(0.18, 0.18, 0.04, 12, 0, 0.17, 0, 0x222222);
+    }
     this.head = part(hp);
-    this.head.position.y = 1.78;
-    const limb = (w: number, h: number, c: number, c2: number) => {
+    this.head.position.y = 1.86;
+    const limb = (w: number, h: number, c: number, c2: number, boot: boolean) => {
       const g = new THREE.Group();
-      g.add(
-        part(
-          new Prims()
-            .box(w, h, w + 0.02, 0, -h / 2, 0, c)
-            .box(w + 0.02, h * 0.28, w + 0.04, 0, -h * 0.86, 0, c2),
-        ),
-      );
+      const pr = new Prims()
+        .sphere(w * 0.62, 0, 0, 0, c, [1, 1, 1], 1)
+        .cyl(w * 0.56, w * 0.46, h, 9, 0, -h / 2, 0, c)
+        .sphere(w * 0.52, 0, -h + 0.02, boot ? 0.05 : 0, c2, boot ? [1, 0.7, 1.5] : [1, 1, 1], 1);
+      if (boot) pr.cyl(w * 0.6, w * 0.6, h * 0.22, 9, 0, -h * 0.9, 0, c2);
+      g.add(part(pr));
       return g;
     };
-    this.legL.add(limb(0.24, 0.85, o.pants, o.boots ?? 0x3a2a1a).children[0]!);
-    this.legR.add(limb(0.24, 0.85, o.pants, o.boots ?? 0x3a2a1a).children[0]!);
-    this.legL.position.set(-0.15, 0.88, 0);
-    this.legR.position.set(0.15, 0.88, 0);
-    this.armL.add(limb(0.18, 0.66, o.shirt, skin).children[0]!);
-    this.armR.add(limb(0.18, 0.66, o.shirt, skin).children[0]!);
+    this.legL.add(limb(0.26, 0.88, o.pants, o.boots ?? 0x3a2a1a, true).children[0]!);
+    this.legR.add(limb(0.26, 0.88, o.pants, o.boots ?? 0x3a2a1a, true).children[0]!);
+    this.legL.position.set(-0.13, 0.9, 0);
+    this.legR.position.set(0.13, 0.9, 0);
+    this.armL.add(limb(0.2, 0.68, o.shirt, skin, false).children[0]!);
+    this.armR.add(limb(0.2, 0.68, o.shirt, skin, false).children[0]!);
     this.armL.position.set(-0.4, 1.5, 0);
     this.armR.position.set(0.4, 1.5, 0);
     this.hand.position.set(0, -0.66, 0.05);
