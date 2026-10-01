@@ -83,6 +83,7 @@ export class BusinessSystem implements System {
     const sim = this.sim;
     const pl = sim.player;
     for (const b of sim.building.built.values()) {
+      if (b.plot === 'visit') continue;
       const d = sim.building.def(b);
       if (!d.interactive) continue;
       if (d.interactive === 'sawmill') this.updateSawmill(b, dt, pl);

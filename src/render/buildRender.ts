@@ -49,6 +49,12 @@ export class BuildRender {
   private signMeshes = new Map<number, THREE.Mesh>();
   private lights: THREE.PointLight[] = [];
   private lightT = 0;
+  private wireLines: THREE.LineSegments;
+  private wireT = 0;
+  private screens = new Map<
+    number,
+    { mesh: THREE.Mesh; tex: THREE.CanvasTexture; ctx: CanvasRenderingContext2D; last: string }
+  >();
   private m = new THREE.Matrix4();
   private q = new THREE.Quaternion();
   private v = new THREE.Vector3();
@@ -66,6 +72,13 @@ export class BuildRender {
     );
     this.sel.visible = false;
     this.group.add(this.sel);
+    this.wireLines = new THREE.LineSegments(
+      new THREE.BufferGeometry(),
+      new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true, opacity: 0.9 }),
+    );
+    this.wireLines.renderOrder = 5;
+    this.wireLines.frustumCulled = false;
+    this.group.add(this.wireLines);
     for (let i = 0; i < 4; i++) {
       const l = new THREE.PointLight(0xffe2a0, 0, 20, 1.6);
       this.lights.push(l);
@@ -233,6 +246,12 @@ export class BuildRender {
       this.markerSig = sig;
       this.buildMarkers();
     }
+    // wires + screens
+    this.wireT -= dt;
+    if (this.wireT <= 0) {
+      this.wireT = 0.25;
+      this.updateWires();
+    }
     // lamp lights
     this.lightT -= dt;
     if (this.lightT <= 0) {
@@ -243,6 +262,7 @@ export class BuildRender {
         for (const b of bs.built.values()) {
           const k = b.p[0];
           if (k !== 'lamp' && k !== 'lantern') continue;
+          if (sim.logic.isWired(b) && !sim.logic.power.get(b.id)) continue;
           const d = Math.hypot(b.p[1] - sim.player.x, b.p[3] - sim.player.z);
           if (d < 60)
             cands.push({ x: b.p[1], y: b.p[2] + PART_BY_ID[k]!.size[1] * b.p[6] * 0.85, z: b.p[3], d });
@@ -256,6 +276,86 @@ export class BuildRender {
           l.intensity = 2.2;
         } else l.intensity = 0;
       });
+    }
+  }
+
+  private updateWires(): void {
+    const sim = this.sim;
+    const bs = sim.building;
+    const pos: number[] = [];
+    const col: number[] = [];
+    const showAll = bs.active && (bs.tool === 'wire' || true);
+    for (const [plotId, st] of Object.entries(sim.state.plots)) {
+      if (!st.wires?.length) continue;
+      const byUid = new Map<number, import('../systems/building').Built>();
+      for (const b of bs.built.values())
+        if (b.plot === plotId && b.p[10] !== undefined) byUid.set(b.p[10] as number, b);
+      for (const [a, b] of st.wires) {
+        const A = byUid.get(a),
+          B = byUid.get(b);
+        if (!A || !B) continue;
+        if (!showAll && Math.hypot(A.p[1] - sim.player.x, A.p[3] - sim.player.z) > 40) continue;
+        const ha = PART_BY_ID[A.p[0]]!.size[1] * A.p[6] * 0.6,
+          hb = PART_BY_ID[B.p[0]]!.size[1] * B.p[6] * 0.6;
+        pos.push(A.p[1], A.p[2] + ha, A.p[3], B.p[1], B.p[2] + hb, B.p[3]);
+        const on = sim.logic.power.get(A.id);
+        const c = on ? [0.3, 1, 0.4] : [0.8, 0.25, 0.2];
+        col.push(...c, ...c);
+      }
+    }
+    const g = this.wireLines.geometry;
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    this.wireLines.visible = pos.length > 0 && (bs.active || true);
+    // screens
+    for (const b of bs.built.values()) {
+      if (b.p[0] !== 'screen') continue;
+      if (Math.hypot(b.p[1] - sim.player.x, b.p[3] - sim.player.z) > 60) continue;
+      let e = this.screens.get(b.id);
+      if (!e) {
+        const cv = document.createElement('canvas');
+        cv.width = 256;
+        cv.height = 128;
+        const tex = new THREE.CanvasTexture(cv);
+        const mesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.85 * b.p[5], 1.05 * b.p[6]),
+          new THREE.MeshBasicMaterial({ map: tex }),
+        );
+        const d = PART_BY_ID.screen!;
+        const off = new THREE.Vector3(
+          0,
+          d.size[1] * b.p[6] * 0.5,
+          d.size[2] * b.p[7] * 0.5 + 0.03,
+        ).applyAxisAngle(new THREE.Vector3(0, 1, 0), b.p[4]);
+        mesh.position.set(b.p[1] + off.x, b.p[2] + off.y, b.p[3] + off.z);
+        mesh.rotation.y = b.p[4];
+        this.group.add(mesh);
+        e = { mesh, tex, ctx: cv.getContext('2d')!, last: '' };
+        this.screens.set(b.id, e);
+      }
+      const wired = sim.logic.isWired(b);
+      const txt = wired
+        ? sim.logic.power.get(b.id)
+          ? '● ON'
+          : '○ OFF'
+        : `LOGS ${Math.floor(sim.state.stats.logsSold ?? 0)}`;
+      if (txt !== e.last) {
+        e.last = txt;
+        e.ctx.fillStyle = '#0b2a14';
+        e.ctx.fillRect(0, 0, 256, 128);
+        e.ctx.fillStyle = txt.startsWith('○') ? '#7a8a7a' : '#7fff9a';
+        e.ctx.font = '800 48px monospace';
+        e.ctx.textAlign = 'center';
+        e.ctx.textBaseline = 'middle';
+        e.ctx.fillText(txt, 128, 64);
+        e.tex.needsUpdate = true;
+      }
+    }
+    for (const [id, e] of this.screens) {
+      if (!bs.built.has(id)) {
+        this.group.remove(e.mesh);
+        this.screens.delete(id);
+      }
     }
   }
 

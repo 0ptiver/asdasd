@@ -9,6 +9,7 @@ import type { View } from '../render/view';
 import { Sfx } from '../audio/sfx';
 import type { Interactable } from '../systems/hubSystem';
 import { WorldMap } from '../ui/worldMap';
+import { NetClient } from '../net/client';
 import type { Action } from './input';
 
 export type Screen = 'loading' | 'menu' | 'game';
@@ -23,6 +24,7 @@ export class Game {
   view: View | null = null;
   state: GameState | null = null;
   readonly sfx = new Sfx();
+  readonly net = new NetClient(this);
   panel: { name: string; arg?: string } | null = null;
   slot = -1;
   screen: Screen = 'loading';
@@ -134,11 +136,17 @@ export class Game {
       map: 'map',
       quests: 'quests',
       craft: 'craft',
-      build: 'build',
       garage: 'garage',
     };
     if (a === 'console') {
       this.togglePanel('console');
+      return;
+    }
+    if (a === 'build') {
+      if (!this.panel && this.sim.player.mode === 'foot') {
+        this.sim.building.setMode(!this.sim.building.active);
+        this.bump(true);
+      }
       return;
     }
     const p = map[a];
@@ -146,6 +154,8 @@ export class Game {
   }
   /** Player pressed E on an interactable. */
   interact(it: Interactable): void {
+    const sim = this.sim;
+    if (!sim) return;
     switch (it.kind) {
       case 'npc':
         this.openPanel('npc', it.arg);
@@ -154,7 +164,7 @@ export class Game {
         this.openPanel('sell');
         break;
       case 'sawmill':
-        this.sim?.sawmill.collect();
+        sim.sawmill.collect();
         break;
       case 'board':
         this.openPanel('quests');
@@ -174,8 +184,49 @@ export class Game {
       case 'forge':
         this.openPanel('forge');
         break;
+      case 'craft':
+        this.openPanel('craft');
+        break;
       case 'shop':
-        this.openPanel('shop', it.arg);
+        if (it.arg === 'toll') sim.world.payToll();
+        else this.openPanel('shop', it.arg);
+        break;
+      case 'part':
+        sim.building.use(Number(it.arg));
+        break;
+      case 'vehicle': {
+        const v = sim.vehicles.live.get(it.arg ?? '');
+        if (v) sim.vehicles.enter(v);
+        break;
+      }
+      case 'secret': {
+        const sc = sim.world.secrets.find((x) => x.id === it.arg);
+        if (sc) sim.world.findSecret(sc);
+        break;
+      }
+      case 'shaft': {
+        const [x, z] = (it.arg ?? '0,0').split(',').map(Number);
+        sim.player.teleport(x!, z!);
+        sim.bus.emit('notify', { text: 'You ride the mine shaft…', kind: 'info' });
+        break;
+      }
+      case 'outpost':
+        this.openPanel('outpost', it.arg);
+        break;
+      case 'ferry':
+        sim.world.boardFerry();
+        break;
+      case 'fast_travel':
+        this.openPanel('map');
+        break;
+      case 'node':
+        sim.nodes.gather(it.arg ?? '');
+        break;
+      case 'fish':
+        sim.nodes.toggleFishing();
+        break;
+      case 'dig':
+        sim.nodes.dig();
         break;
       default:
         break;
@@ -262,6 +313,7 @@ export class Game {
     this.sfx.listener = { x: p.x, y: p.y, z: p.z, yaw: p.camYaw };
     this.input.poll();
     this.sim.step(dt);
+    this.net.tick(dt);
     this.input.endTick();
   }
   private frame(alpha: number, fdt: number): void {

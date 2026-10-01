@@ -74,7 +74,17 @@ export interface InteractPoint {
     | 'dock'
     | 'train'
     | 'forge'
-    | 'fast_travel';
+    | 'fast_travel'
+    | 'part'
+    | 'vehicle'
+    | 'secret'
+    | 'shaft'
+    | 'outpost'
+    | 'ferry'
+    | 'node'
+    | 'fish'
+    | 'dig'
+    | 'craft';
   arg?: string;
 }
 

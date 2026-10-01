@@ -13,6 +13,8 @@ import { BuildRender } from './buildRender';
 import { VehicleRenderer } from './vehicleRender';
 import { LandmarkRender } from './landmarkRender';
 import { WeatherFx } from './weatherFx';
+import { NodeRender, CrewRender } from './companions';
+import { RemoteRender } from './remote';
 import { isNight } from '../core/gameTime';
 import { Fx } from './fx';
 import { AXE_BY_ID, SKINS } from '../data/axes';
@@ -37,6 +39,9 @@ export class View {
   private buildR: BuildRender | null = null;
   private vehR: VehicleRenderer | null = null;
   private lmR: LandmarkRender | null = null;
+  private nodeR: NodeRender | null = null;
+  private remoteR: RemoteRender | null = null;
+  private crewR: CrewRender | null = null;
   private weather = new WeatherFx();
   private fx = new Fx();
   private heldKey = '';
@@ -120,6 +125,11 @@ export class View {
     );
     this.buildR = new BuildRender(sim);
     this.world.add(this.buildR.group);
+    this.remoteR = new RemoteRender(this.game);
+    this.world.add(this.remoteR.group);
+    this.nodeR = new NodeRender(sim);
+    this.crewR = new CrewRender(sim);
+    this.world.add(this.nodeR.group, this.crewR.group);
     this.lmR = new LandmarkRender(sim);
     this.world.add(this.lmR.group, this.weather.points);
     this.vehR = new VehicleRenderer(sim);
@@ -166,6 +176,11 @@ export class View {
       this.world.remove(this.buildR.group);
     }
     this.buildR = null;
+    if (this.remoteR) this.world.remove(this.remoteR.group);
+    this.remoteR = null;
+    if (this.nodeR) this.world.remove(this.nodeR.group);
+    if (this.crewR) this.world.remove(this.crewR.group);
+    this.nodeR = this.crewR = null;
     if (this.lmR) this.world.remove(this.lmR.group, this.weather.points);
     this.lmR = null;
     if (this.vehR) this.world.remove(this.vehR.group);
@@ -283,6 +298,9 @@ export class View {
     this.logR?.update();
     this.buildR?.update(dt);
     this.lmR?.update(dt);
+    this.nodeR?.update(dt);
+    this.remoteR?.update(dt);
+    this.crewR?.update(dt);
     this.weather.update(dt, st.weather.kind, this.camera.position, this.env.daylight, this.env.indoor);
     this.vehR?.update(
       dt,

@@ -49,6 +49,8 @@ export interface PlotState {
   sawmillLevel: number;
   chests: Record<string, ItemStack[]>;
   texts: Record<string, string>;
+  /** logic wires between part uids: [from, to] */
+  wires: [number, number][];
   businesses: Record<
     string,
     {
@@ -278,6 +280,7 @@ export function emptyPlot(): PlotState {
     sawmillLevel: 0,
     chests: {},
     texts: {},
+    wires: [],
     businesses: {},
     outpost: { level: 0, lastCollect: 0 },
   };

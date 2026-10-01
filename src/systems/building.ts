@@ -8,6 +8,7 @@ import { itemName } from './itemValue';
 import { levelOf } from '../core/skills';
 import { CONFIG } from '../config';
 import { Terrain } from '../world/terrain';
+import { VISIT } from '../world/layout';
 
 export interface Built {
   id: number;
@@ -19,7 +20,29 @@ export interface Built {
   power: boolean;
 }
 
-export type Tool = 'place' | 'select' | 'delete';
+export type Tool = 'place' | 'select' | 'delete' | 'wire';
+export const UID_KINDS = new Set([
+  'chest',
+  'sign',
+  'door',
+  'gate',
+  'lamp',
+  'lantern',
+  'piston',
+  'conveyor',
+  'screen',
+  'switch',
+  'timer',
+  'sensor',
+  'gate_and',
+  'gate_not',
+  'sawmill',
+  'sellstand',
+  'workbench',
+  'workshop',
+  'factory',
+  'firewood_stall',
+]);
 
 type Op =
   | { t: 'add'; plot: string; p: PlacedPart; id: number }
@@ -87,7 +110,7 @@ export class BuildingSystem implements System {
       plot,
       p,
       body: null,
-      open: p[10] === 1 && PART_BY_ID[p[0]]?.interactive === 'door',
+      open: false,
       power: false,
     };
     this.built.set(b.id, b);
@@ -195,15 +218,7 @@ export class BuildingSystem implements System {
         Math.abs(o[4] - p[4]) < 0.05
       )
         return 'Already placed here';
-    if (
-      (p[0] === 'chest' ||
-        p[0] === 'sign' ||
-        def.interactive === 'sawmill' ||
-        def.interactive === 'sellstand' ||
-        def.interactive === 'workbench') &&
-      p[10] === undefined
-    )
-      p[10] = this.sim.state.world.nextUid++;
+    if (UID_KINDS.has(p[0]) && p[10] === undefined) p[10] = this.sim.state.world.nextUid++;
     if (p[0] === 'sign') st.texts[String(p[10])] = this.signText;
     st.parts.push(p);
     const near = Math.hypot(p[1] - this.sim.player.x, p[3] - this.sim.player.z) < 200;
@@ -423,7 +438,7 @@ export class BuildingSystem implements System {
         p[7],
         p[8],
         p[9],
-        p[0] === 'chest' || p[0] === 'sign' ? undefined : p[10],
+        UID_KINDS.has(p[0]) ? undefined : p[10],
       ];
       const r = this.place(plot, q, { record: false });
       if (typeof r !== 'string') placed++;
@@ -445,7 +460,6 @@ export class BuildingSystem implements System {
     switch (d.interactive) {
       case 'door':
         b.open = !b.open;
-        b.p[10] = b.open ? 1 : 0;
         if (b.open) this.dropCollider(b);
         else this.addCollider(b);
         for (const f of this.onChange) f(b);
@@ -468,13 +482,13 @@ export class BuildingSystem implements System {
         }
         break;
       default:
-        s.game.openPanel('part', String(id));
+        if (b.plot !== 'visit') s.game.openPanel('part', String(id));
     }
   }
 
   chestOf(id: number) {
     const b = this.built.get(id);
-    if (!b || this.def(b).interactive !== 'chest') return null;
+    if (!b || b.plot === 'visit' || this.def(b).interactive !== 'chest') return null;
     const st = this.sim.state.plots[b.plot]!;
     return (st.chests[String(b.p[10])] ??= []);
   }
@@ -532,8 +546,55 @@ export class BuildingSystem implements System {
     return best;
   }
 
+  // --------------------------------------------------------------- visiting other players' plots (read-only)
+  visitOwner: string | null = null;
+  /** Show another player's shared plots on the Visitor Isle. */
+  loadVisit(owner: string, plots: Record<string, unknown[]>): void {
+    this.clearVisit();
+    this.visitOwner = owner;
+    let ox = VISIT.x - VISIT.hx + 25;
+    for (const [plotId, parts] of Object.entries(plots)) {
+      const def = PLOT_BY_ID[plotId];
+      if (!def) continue;
+      for (const raw of parts) {
+        const p = raw as PlacedPart;
+        if (!PART_BY_ID[p[0]]) continue;
+        const q: PlacedPart = [
+          p[0],
+          ox + (p[1] - def.center[0]),
+          VISIT.y + (p[2] - this.sim.streamer.terrain.heightAt(def.center[0], def.center[1])),
+          VISIT.z + (p[3] - def.center[1]),
+          p[4],
+          p[5],
+          p[6],
+          p[7],
+          p[8],
+          p[9],
+          undefined,
+        ];
+        this.register('visit', q, true);
+      }
+      ox += def.size[0] + 16;
+    }
+    this.sim.player.teleport(VISIT.x - VISIT.hx + 12, VISIT.z + VISIT.hz - 6, VISIT.y);
+    this.sim.bus.emit('notify', { text: `Visiting ${owner}'s plots (look, but don't touch!)`, kind: 'good' });
+  }
+  clearVisit(): void {
+    for (const b of [...this.built.values()]) {
+      if (b.plot !== 'visit') continue;
+      this.dropCollider(b);
+      this.built.delete(b.id);
+      for (const f of this.onRemove) f(b);
+    }
+    this.visitOwner = null;
+  }
+
   // --------------------------------------------------------------- build mode
   setMode(on: boolean): void {
+    if (on && this.visitOwner) {
+      this.sim.bus.emit('notify', { text: 'You cannot build while visiting', kind: 'bad' });
+      return;
+    }
     this.active = on;
     const inp = this.sim.game.input;
     inp.freeCursor = on;
@@ -693,7 +754,14 @@ export class BuildingSystem implements System {
     if (inp.rawPressed('KeyC') && ctrl) this.copy();
     if (inp.rawPressed('KeyV') && ctrl) this.paste();
     if (inp.rawPressed('Tab'))
-      this.tool = this.tool === 'place' ? 'select' : this.tool === 'select' ? 'delete' : 'place';
+      this.tool =
+        this.tool === 'place'
+          ? 'select'
+          : this.tool === 'select'
+            ? 'delete'
+            : this.tool === 'delete'
+              ? 'wire'
+              : 'place';
     if (inp.rawPressed('Delete') || inp.rawPressed('Backspace')) this.deleteSelected();
     if (inp.rawPressed('BracketRight')) this.resize(1.1);
     if (inp.rawPressed('BracketLeft')) this.resize(1 / 1.1);
@@ -735,7 +803,27 @@ export class BuildingSystem implements System {
     }
   }
 
+  wireFrom: number | null = null;
   click(): void {
+    if (this.tool === 'wire') {
+      const b = this.pickPart();
+      if (!b) {
+        this.wireFrom = null;
+        return;
+      }
+      if (this.wireFrom === null) {
+        this.wireFrom = b.id;
+        this.sim.bus.emit('notify', {
+          text: `Wire from ${this.def(b).name} — click the part to power`,
+          kind: 'info',
+        });
+      } else {
+        const a = this.built.get(this.wireFrom);
+        if (a && a !== b && a.plot === b.plot) this.toggleWire(a, b);
+        this.wireFrom = null;
+      }
+      return;
+    }
     if (this.tool === 'place') {
       const g = this.ghost;
       if (!g.valid || !g.plot) {
@@ -752,6 +840,26 @@ export class BuildingSystem implements System {
       const b = this.pickPart();
       if (b) this.remove(b.id);
     }
+  }
+
+  /** Create or remove a wire between two logic-capable parts of one plot. */
+  toggleWire(a: Built, b: Built): boolean {
+    const st = this.sim.state.plots[a.plot];
+    if (!st || a.p[10] === undefined || b.p[10] === undefined) {
+      this.sim.bus.emit('notify', { text: 'Those parts cannot be wired', kind: 'bad' });
+      return false;
+    }
+    const w = (st.wires ??= []);
+    const i = w.findIndex(([x, y]) => x === a.p[10] && y === b.p[10]);
+    if (i >= 0) {
+      w.splice(i, 1);
+      this.sim.bus.emit('notify', { text: 'Wire removed', kind: 'info' });
+    } else {
+      if (w.length >= 300) return false;
+      w.push([a.p[10] as number, b.p[10] as number]);
+      this.sim.bus.emit('notify', { text: 'Wired!', kind: 'good' });
+    }
+    return true;
   }
 
   rotate(a: number): void {
@@ -806,7 +914,7 @@ export class BuildingSystem implements System {
       p[3] = g.z - e.dx * s + e.dz * c;
       p[2] = g.y + e.dy;
       p[4] = e.p[4] + this.rot;
-      if (p[0] === 'chest' || p[0] === 'sign') p[10] = undefined;
+      if (UID_KINDS.has(p[0])) p[10] = undefined;
       const rr = this.place(g.plot, p);
       if (typeof rr !== 'string') n++;
     }

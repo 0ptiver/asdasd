@@ -19,6 +19,15 @@ export function PausePanel() {
         <button class="btn alt" onClick={() => setSettings(true)}>
           Settings
         </button>
+        <button class="btn alt" onClick={() => game.openPanel('net')}>
+          Multiplayer {game.net.online ? '(online)' : ''}
+        </button>
+        <button class="btn alt" onClick={() => game.openPanel('workers')}>
+          Lumberjack crew
+        </button>
+        <button class="btn alt" onClick={() => game.openPanel('market')}>
+          Price board
+        </button>
         <button class="btn alt" onClick={() => game.openPanel('achievements')}>
           Achievements
         </button>

@@ -19,7 +19,8 @@
     "howler": "^2.2.4",
     "idb": "^8.0.3",
     "preact": "^11.0.0",
-    "three": "^0.186.1"
+    "three": "^0.186.1",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -28,6 +29,7 @@
     "@types/howler": "^2.2.13",
     "@types/node": "^26.6.3",
     "@types/three": "^0.186.0",
+    "@types/ws": "^8.18.2",
     "eslint": "^10.11.0",
     "fake-indexeddb": "^6.2.5",
     "prettier": "^3.9.9",

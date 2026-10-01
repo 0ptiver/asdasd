@@ -201,6 +201,47 @@ export function Hud() {
           </div>
         </div>
       )}
+      {sim.bosses.engaged && (
+        <div class="treehp" style="top:10%;width:420px" data-testid="boss-bar">
+          <div style="font-weight:900;text-shadow:0 2px 4px #000">{sim.bosses.engaged.def.name}</div>
+          <div class="bar red" style="height:16px">
+            <i
+              style={{
+                width: `${Math.max(0, (sim.bosses.engaged.tree.hp / sim.bosses.engaged.tree.maxHp) * 100)}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
+      {sim.events.current && (
+        <div
+          class="hud-chip"
+          style="position:fixed;left:50%;top:44px;transform:translateX(-50%);font-size:0.85rem;color:var(--amber-2)"
+        >
+          🎉 {sim.events.current.id.replace('_', ' ').toUpperCase()}
+        </div>
+      )}
+      {sim.nodes.fishing && (
+        <div class="prompt" style="top:40%">
+          🎣 {sim.nodes.fishing.bite ? 'Bite! Reeling in…' : 'Waiting for a bite… (stand still)'}
+        </div>
+      )}
+      {sim.nodes.treasure && !sim.nodes.treasure.found && (
+        <div class="hud-chip" style="position:fixed;left:12px;top:190px;font-size:0.8rem">
+          🗺️ Treasure{' '}
+          {Math.round(Math.hypot(sim.nodes.treasure.x - sim.player.x, sim.nodes.treasure.z - sim.player.z))}m{' '}
+          {
+            ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][
+              Math.round(
+                ((Math.atan2(sim.nodes.treasure.x - sim.player.x, -(sim.nodes.treasure.z - sim.player.z)) +
+                  Math.PI * 2) %
+                  (Math.PI * 2)) /
+                  (Math.PI / 4),
+              ) % 8
+            ]
+          }
+        </div>
+      )}
       <Toasts />
       <TouchControls />
       <div class="hud-br">

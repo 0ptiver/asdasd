@@ -271,7 +271,7 @@ export class Terrain {
       if (dx > zn.hx + 14 || dz > zn.hz + 14) continue;
       let base = this.plotBase.get(zn.id);
       if (base === undefined) {
-        base = this.rawHeight(zn.x, zn.z);
+        base = zn.h ?? this.rawHeight(zn.x, zn.z);
         this.plotBase.set(zn.id, base);
       }
       const k = (1 - smoothstep(0, 14, dx - zn.hx)) * (1 - smoothstep(0, 14, dz - zn.hz));

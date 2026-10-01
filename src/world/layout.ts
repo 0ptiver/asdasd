@@ -27,7 +27,9 @@ export const FERRY_ROUTE: [number, number][] = (() => {
 /** Airfield: runway along x, flattened by the terrain generator. */
 export const AIRFIELD = { x: -230, z: 130, hx: 80, hz: 18 };
 /** Extra axis-aligned zones the terrain flattens (besides plots and the hub). */
-export const FLAT_ZONES: { id: string; x: number; z: number; hx: number; hz: number }[] = [
+export const VISIT = { x: 1290, z: 1290, hx: 70, hz: 50, y: 6 };
+export const FLAT_ZONES: { id: string; x: number; z: number; hx: number; hz: number; h?: number }[] = [
+  { id: 'visit', x: VISIT.x, z: VISIT.z, hx: VISIT.hx, hz: VISIT.hz, h: VISIT.y },
   { id: 'airfield', x: AIRFIELD.x, z: AIRFIELD.z + 14, hx: AIRFIELD.hx + 10, hz: AIRFIELD.hz + 26 },
 ];
 

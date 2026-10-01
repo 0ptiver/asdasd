@@ -14,6 +14,19 @@ import { MapPanel } from './panels/MapPanel';
 import { LandPanel } from './panels/LandPanel';
 import { ChestPanel } from './panels/ChestPanel';
 import { BuildBar } from './BuildBar';
+import { NetPanel } from './panels/NetPanel';
+import {
+  MarketPanel,
+  ExchangePanel,
+  CraftPanel,
+  SmithPanel,
+  WorkersPanel,
+  OutpostPanel,
+  PartPanel,
+  AchievementsPanel,
+  TravelerPanel,
+  TrainPanel,
+} from './panels/EconomyPanels';
 import { GaragePanel, HarborPanel, AirfieldPanel, GasPanel } from './panels/GaragePanel';
 
 export function App() {
@@ -57,6 +70,42 @@ export function App() {
         break;
       case 'map':
         panel = <MapPanel />;
+        break;
+      case 'net':
+        panel = <NetPanel />;
+        break;
+      case 'market':
+        panel = <MarketPanel />;
+        break;
+      case 'exchange':
+        panel = <ExchangePanel />;
+        break;
+      case 'craft':
+        panel = <CraftPanel />;
+        break;
+      case 'smith':
+        panel = <SmithPanel />;
+        break;
+      case 'forge':
+        panel = <SmithPanel />;
+        break;
+      case 'workers':
+        panel = <WorkersPanel />;
+        break;
+      case 'outpost':
+        panel = <OutpostPanel id={p.arg ?? ''} />;
+        break;
+      case 'part':
+        panel = <PartPanel id={p.arg ?? ''} />;
+        break;
+      case 'achievements':
+        panel = <AchievementsPanel />;
+        break;
+      case 'traveler':
+        panel = <TravelerPanel />;
+        break;
+      case 'train':
+        panel = <TrainPanel />;
         break;
       case 'garage':
         panel = <GaragePanel />;

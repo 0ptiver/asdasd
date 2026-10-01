@@ -28,6 +28,7 @@ import { JobSystem } from '../systems/jobs';
 import { WorkerSystem } from '../systems/workers';
 import { BusinessSystem } from '../systems/businesses';
 import { NodeSystem } from '../systems/nodes';
+import { LogicSystem } from '../systems/logic';
 import { BossSystem } from '../systems/bosses';
 import { AchievementSystem, PrestigeSystem, EventSystem, PetSystem } from '../systems/progression';
 
@@ -60,6 +61,7 @@ export function buildSim(game: Game, state: GameState): Sim {
   sim.workers = sim.add(new WorkerSystem(sim));
   sim.businesses = sim.add(new BusinessSystem(sim));
   sim.nodes = sim.add(new NodeSystem(sim));
+  sim.logic = sim.add(new LogicSystem(sim));
   sim.bosses = sim.add(new BossSystem(sim));
   sim.achievements = sim.add(new AchievementSystem(sim));
   sim.prestige = sim.add(new PrestigeSystem(sim));

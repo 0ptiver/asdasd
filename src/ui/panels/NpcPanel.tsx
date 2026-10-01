@@ -21,6 +21,14 @@ const BUTTONS: Record<string, [string, string, string?][]> = {
   traveler: [['Strange wares', 'traveler']],
 };
 
+const EXTRA: Record<string, [string, string, string?][]> = {
+  ivy: [
+    ['Hire loggers', 'workers'],
+    ['Achievements & prestige', 'achievements'],
+  ],
+  gus: [['Crafting info', 'craft']],
+};
+
 export function NpcPanel({ id }: { id: string }) {
   const npc = NPC_BY_ID[id];
   const [line] = useState(() => (npc ? npc.lines[Math.floor(Math.random() * npc.lines.length)] : ''));
@@ -44,6 +52,11 @@ export function NpcPanel({ id }: { id: string }) {
         <div class="row" style="margin-top:14px">
           {(npc.shop && BUTTONS[npc.shop] ? BUTTONS[npc.shop]! : []).map(([label, panel, arg]) => (
             <button class="btn" onClick={() => game.openPanel(panel, arg)}>
+              {label}
+            </button>
+          ))}
+          {(EXTRA[id] ?? []).map(([label, panel, arg]) => (
+            <button class="btn alt" onClick={() => game.openPanel(panel, arg)}>
               {label}
             </button>
           ))}

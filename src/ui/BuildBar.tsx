@@ -47,7 +47,7 @@ export function BuildBar() {
       <div class="row" style="justify-content:space-between">
         <div class="row">
           <b style="color:var(--amber-2)">🔨 BUILD</b>
-          {(['place', 'select', 'delete'] as const).map((t) => (
+          {(['place', 'select', 'delete', 'wire'] as const).map((t) => (
             <button class={'btn small' + (b.tool === t ? '' : ' alt')} onClick={set(() => (b.tool = t))}>
               {t}
             </button>
