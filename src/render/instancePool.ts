@@ -89,6 +89,18 @@ export class InstancePool {
     this.dirty = true;
   }
 
+  /** Direct write mode (every frame): set instance i, then call setCount(n) + flush(). */
+  setAt(i: number, m: THREE.Matrix4, color: THREE.Color, glow = 0): void {
+    if (i >= this.capacity) return;
+    this.mesh.setMatrixAt(i, m);
+    this.mesh.setColorAt(i, color);
+    this.glow.setX(i, glow);
+    this.dirty = true;
+  }
+  setCount(n: number): void {
+    this.mesh.count = Math.min(n, this.capacity);
+  }
+
   flush(): void {
     if (!this.dirty) return;
     this.dirty = false;

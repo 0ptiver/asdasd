@@ -87,6 +87,30 @@ export class PlayerSystem implements System {
     this.sim.bus.emit('notify', { text: `You passed out and woke up in town (-$${loss})`, kind: 'bad' });
   }
 
+  /** Camera ray (matches the View's camera placement, minus smoothing/collision). */
+  cameraRay(): { ox: number; oy: number; oz: number; dx: number; dy: number; dz: number } {
+    const cp = Math.cos(this.camPitch);
+    const sp = Math.sin(this.camPitch);
+    const fx = -Math.sin(this.camYaw) * cp;
+    const fy = -sp;
+    const fz = -Math.cos(this.camYaw) * cp;
+    const hx = this.x, hy = this.y + 1.7, hz = this.z;
+    const ox = hx - fx * this.camDist + Math.cos(this.camYaw) * 0.5;
+    const oy = hy - fy * this.camDist + 0.3;
+    const oz = hz - fz * this.camDist - Math.sin(this.camYaw) * 0.5;
+    // aim at a point far along the look direction from the head so the ray passes through the crosshair target
+    const tx = hx + Math.cos(this.camYaw) * 0.5 + fx * 40, ty = hy - 0.1 + fy * 40, tz = hz - Math.sin(this.camYaw) * 0.5 + fz * 40;
+    const dx = tx - ox, dy = ty - oy, dz = tz - oz;
+    const l = Math.hypot(dx, dy, dz);
+    return { ox, oy, oz, dx: dx / l, dy: dy / l, dz: dz / l };
+  }
+
+  grabReach(): number {
+    let r = CONFIG.player.grabReach;
+    if (this.sim.inventory?.equipped()?.def === 'gale_axe') r += 2;
+    return r;
+  }
+
   /** Strength stat = how heavy a log you can drag. */
   strength(): number {
     const st = this.sim.state;

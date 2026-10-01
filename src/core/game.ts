@@ -6,6 +6,7 @@ import { loadSettings, saveSettings, saveSlot, listSlots, loadSlot } from '../sa
 import { newGameState, type GameState, type Settings } from '../save/schema';
 import type { Sim } from './sim';
 import type { View } from '../render/view';
+import { Sfx } from '../audio/sfx';
 
 export type Screen = 'loading' | 'menu' | 'game';
 
@@ -18,6 +19,7 @@ export class Game {
   sim: Sim | null = null;
   view: View | null = null;
   state: GameState | null = null;
+  readonly sfx = new Sfx();
   slot = -1;
   screen: Screen = 'loading';
   canvas!: HTMLCanvasElement;
@@ -50,6 +52,15 @@ export class Game {
     this.settings = await loadSettings();
     this.applySettings();
     this.input = new Input(canvas, () => this.settings);
+    const unlock = () => this.sfx.unlock();
+    window.addEventListener('pointerdown', unlock);
+    window.addEventListener('keydown', unlock);
+    this.bus.on('sfx', (e) => this.sfx.play(e.name, e.x, e.y, e.z, e.vol));
+    this.bus.on('notify', (n) => {
+      if (n.kind === 'bad') this.sfx.play('error');
+      else if (n.kind === 'good') this.sfx.play('good');
+    });
+    this.bus.on('level', () => this.sfx.play('level'));
     this.loop = new FixedLoop(
       (dt) => this.tick(dt),
       (a, fdt) => this.frame(a, fdt),
@@ -147,6 +158,9 @@ export class Game {
 
   private tick(dt: number): void {
     if (!this.sim) return;
+    this.sfx.volume = this.settings.sfx;
+    const p = this.sim.player;
+    this.sfx.listener = { x: p.x, y: p.y, z: p.z, yaw: p.camYaw };
     this.input.poll();
     this.sim.step(dt);
     this.input.endTick();

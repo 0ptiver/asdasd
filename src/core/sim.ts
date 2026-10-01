@@ -8,6 +8,16 @@ import type { PlayerSystem } from '../systems/player';
 import type { TreeSystem } from '../systems/trees';
 import type { HubSystem } from '../systems/hubSystem';
 import type { EconomySystem } from '../systems/economy';
+import type { InventorySystem } from '../systems/inventory';
+import type { LogSystem } from '../systems/logs';
+import type { GrabSystem } from '../systems/grab';
+import type { ChoppingSystem } from '../systems/chopping';
+import type { MarketSystem } from '../systems/market';
+import type { SawmillSystem } from '../systems/sawmill';
+import type { SellSystem } from '../systems/sell';
+import type { ShopSystem } from '../systems/shop';
+import { levelOf } from './skills';
+import type { SkillId } from '../data/types';
 
 export interface System {
   readonly name: string;
@@ -29,6 +39,15 @@ export class Sim {
   trees!: TreeSystem;
   hub!: HubSystem;
   econ!: EconomySystem;
+  inventory!: InventorySystem;
+  logs!: LogSystem;
+  grab!: GrabSystem;
+  chopping!: ChoppingSystem;
+  market!: MarketSystem;
+  sawmill!: SawmillSystem;
+  sell!: SellSystem;
+  shop!: ShopSystem;
+  plots?: { insideOwnedPlot(x: number, z: number): boolean };
   private autosaveAcc = 0;
 
   constructor(
@@ -57,6 +76,17 @@ export class Sim {
     if (this.autosaveAcc >= CONFIG.autosaveSec && this.game.settings.autosave) {
       this.autosaveAcc = 0;
       void this.game.save(true);
+    }
+  }
+
+  addXp(skill: SkillId, amount: number): void {
+    const st = this.state;
+    const before = levelOf(st.skills[skill]);
+    st.skills[skill] += amount * (1 + st.prestige.level * 0.05);
+    const after = levelOf(st.skills[skill]);
+    if (after > before) {
+      this.bus.emit('level', { skill, level: after });
+      this.bus.emit('notify', { text: `${skill[0]!.toUpperCase() + skill.slice(1)} level ${after}!`, kind: 'good' });
     }
   }
 

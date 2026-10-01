@@ -7,7 +7,10 @@ import { buildSkyMesh, buildTerrainMesh } from './terrainMesh';
 import type { Chunk } from '../systems/streaming';
 import { TreeRenderer } from './treeRender';
 import { HubRender } from './hubRender';
-import { Human } from './models';
+import { Human, makeAxeModel } from './models';
+import { LogRenderer } from './logRender';
+import { Fx } from './fx';
+import { AXE_BY_ID, SKINS } from '../data/axes';
 import { NPCS } from '../data/npcs';
 import { BIOME_BY_ID } from '../data/biomes';
 import { CONFIG } from '../config';
@@ -25,6 +28,9 @@ export class View {
   private terrainMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
   private chunkMeshes = new Map<string, THREE.Object3D[]>();
   private treeR: TreeRenderer | null = null;
+  private logR: LogRenderer | null = null;
+  private fx = new Fx();
+  private heldKey = '';
   private hubR: HubRender | null = null;
   private playerModel: Human | null = null;
   private npcModels: { human: Human; x: number; z: number; phase: number }[] = [];
@@ -88,6 +94,9 @@ export class View {
     st.onUnload.push(removeChunk);
     this.treeR = new TreeRenderer(sim.trees);
     this.world.add(this.treeR.group);
+    this.logR = new LogRenderer(sim.logs, this.treeR);
+    this.world.add(this.logR.group, this.fx.points);
+    this.unsub.push(sim.bus.on('fx', (e) => this.fx.emit(e.kind, e.x, e.y, e.z, e.n ?? 8, e.color)));
     this.hubR = new HubRender(sim.hub.layout);
     this.world.add(this.hubR.group);
     this.playerModel = new Human({ shirt: 0xc0392b, pants: 0x3a4a6a, hat: 0x2a5a3a, beard: true });
@@ -120,7 +129,10 @@ export class View {
     if (this.playerModel) this.world.remove(this.playerModel.root);
     for (const n of this.npcModels) this.world.remove(n.human.root);
     this.npcModels = [];
+    if (this.logR) this.world.remove(this.logR.group, this.fx.points);
     this.treeR = this.hubR = this.playerModel = null;
+    this.logR = null;
+    this.heldKey = '';
   }
 
   applyQuality(): void {
@@ -190,7 +202,23 @@ export class View {
       n.human.armR.rotation.x = Math.sin(n.phase * 1.2) * 0.06;
       n.human.head.rotation.y = Math.sin(n.phase * 0.5) * 0.4;
     }
-    this.hubR?.update(this.time, false);
+    this.hubR?.update(this.time, sim.sawmill.sawing);
+    this.logR?.update();
+    this.fx.setScale(this.renderer.domElement.height);
+    this.fx.update(dt);
+    // held axe
+    const eq = sim.inventory.equipped();
+    const key = eq ? `${eq.uid}:${eq.skin}` : '';
+    if (key !== this.heldKey && this.playerModel) {
+      this.heldKey = key;
+      if (eq) {
+        const def = AXE_BY_ID[eq.def]!;
+        const tint = SKINS.find((k) => k.id === eq.skin)?.tint ?? null;
+        const m = makeAxeModel(def, tint);
+        m.rotation.x = Math.PI / 2 - 0.5;
+        this.playerModel.setHeld(m);
+      } else this.playerModel.setHeld(null);
+    }
     this.treeR?.update(dt, p.x, p.z);
     this.renderer.render(this.scene, this.camera);
   }
