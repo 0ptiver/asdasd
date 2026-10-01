@@ -18,6 +18,9 @@ export class FakeInput {
   held(a: string) {
     return this.keys.has(a);
   }
+  rawPressed(c: string) {
+    return this.edges.has(c);
+  }
   pressed(a: string) {
     return this.edges.has(a);
   }
