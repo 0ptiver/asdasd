@@ -1,0 +1,51 @@
+import type { PlotDef, BiomeId } from './types';
+
+/** 34 claimable plots. [id suffix, biome, x, z, w, d, price] */
+const rows: [string, BiomeId, number, number, number, number, number][] = [
+  ['hub1', 'meadow', 100, 70, 40, 40, 2000],
+  ['hub2', 'meadow', 100, 10, 40, 40, 2500],
+  ['hub3', 'meadow', -110, 80, 40, 40, 2000],
+  ['hub4', 'meadow', -120, -40, 44, 44, 3000],
+  ['hub5', 'meadow', 60, -90, 50, 50, 4000],
+  ['hub6', 'meadow', -60, -100, 50, 50, 4000],
+  ['hub7', 'meadow', 130, -60, 60, 60, 6000],
+  ['hub8', 'meadow', 0, 120, 70, 70, 9000],
+  ['bw1', 'birchwood', -420, -80, 50, 50, 8000],
+  ['bw2', 'birchwood', -520, -190, 60, 60, 11000],
+  ['bw3', 'birchwood', -560, -60, 50, 50, 9000],
+  ['cg1', 'cherry', 440, -120, 50, 50, 10000],
+  ['cg2', 'cherry', 520, -230, 60, 60, 14000],
+  ['cg3', 'cherry', 500, -90, 50, 50, 11000],
+  ['rv1', 'redwood', -60, -480, 60, 60, 24000],
+  ['rv2', 'redwood', 70, -560, 70, 70, 30000],
+  ['rv3', 'redwood', 0, -620, 60, 60, 26000],
+  ['sw1', 'swamp', -520, 380, 50, 50, 22000],
+  ['sw2', 'swamp', -620, 460, 60, 60, 26000],
+  ['gb1', 'goldbasin', 480, 430, 60, 60, 60000],
+  ['gb2', 'goldbasin', 560, 500, 70, 70, 80000],
+  ['dz1', 'desert', -60, 980, 70, 70, 100000],
+  ['dz2', 'desert', 80, 940, 70, 70, 110000],
+  ['tr1', 'tropics', 920, 820, 60, 60, 90000],
+  ['tr2', 'tropics', 1010, 900, 60, 60, 100000],
+  ['tr3', 'tropics', 880, 900, 70, 70, 120000],
+  ['tg1', 'taiga', -650, -1060, 60, 60, 220000],
+  ['tg2', 'taiga', -760, -1150, 70, 70, 260000],
+  ['vo1', 'volcano', 960, -660, 60, 60, 400000],
+  ['hw1', 'haunted', -1010, 800, 70, 70, 480000],
+  ['sk1', 'sky', 300, -1150, 80, 80, 1500000],
+  ['cc1', 'crystal', -1130, -170, 50, 50, 600000],
+  ['hub9', 'meadow', -150, 150, 80, 80, 12000],
+  ['hub10', 'meadow', 160, 140, 80, 80, 14000],
+];
+
+export const PLOTS: PlotDef[] = rows.map(([id, biome, x, z, w, d, price]) => ({
+  id,
+  name: `${id.toUpperCase()}`,
+  biome,
+  center: [x, z],
+  size: [w, d],
+  price,
+  expand: Math.round(price * 0.25),
+  maxSections: 3,
+}));
+export const PLOT_BY_ID: Record<string, PlotDef> = Object.fromEntries(PLOTS.map((p) => [p.id, p]));

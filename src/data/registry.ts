@@ -1,0 +1,12 @@
+import { STORY } from './quests';
+export * from './woods';
+export * from './biomes';
+export * from './axes';
+export * from './vehicles';
+export * from './items';
+export * from './recipes';
+export * from './npcs';
+export * from './bosses';
+export * from './plots';
+export const QUESTS_ALL = STORY;
+export * from './quests';

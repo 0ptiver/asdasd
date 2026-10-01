@@ -1,0 +1,223 @@
+import type { QuestDef } from './types';
+
+export const STORY: QuestDef[] = [
+  {
+    id: 's1',
+    name: 'First Swing',
+    giver: 'gus',
+    type: 'story',
+    intro: 'Buy an axe, kid. Then bring me some oak.',
+    outro: 'Not bad! Take this for your trouble.',
+    stages: [
+      { text: 'Buy an axe from Gus', kind: 'buy', target: 'axe', count: 1 },
+      { text: 'Chop 5 oak trees', kind: 'chop', target: 'oak', count: 5 },
+      { text: 'Sell logs at the counter', kind: 'sell', target: 'log', count: 5 },
+    ],
+    reward: { money: 150, xp: 40, rep: 5 },
+  },
+  {
+    id: 's2',
+    name: 'Sawdust & Splinters',
+    giver: 'ivy',
+    type: 'story',
+    requires: 's1',
+    intro: 'Logs are fine. Planks are better. Use the sawmill.',
+    outro: 'Planks pay better. Remember that.',
+    stages: [
+      { text: 'Make 10 planks at the public sawmill', kind: 'plank', count: 10 },
+      { text: 'Sell 10 planks', kind: 'sell', target: 'plank', count: 10 },
+    ],
+    reward: { money: 400, xp: 80, items: { crate_common: 1, key_common: 1 }, rep: 5 },
+  },
+  {
+    id: 's3',
+    name: 'A Place of Your Own',
+    giver: 'marla',
+    type: 'story',
+    requires: 's2',
+    intro: "You're ready to own land. Pick a plot.",
+    outro: 'Welcome, landowner!',
+    stages: [
+      { text: 'Buy a plot from Marla', kind: 'buy', target: 'plot', count: 1 },
+      { text: 'Place 10 building parts', kind: 'build', count: 10 },
+    ],
+    reward: { money: 1000, xp: 120, axe: 'surveyor_axe', rep: 8 },
+  },
+  {
+    id: 's4',
+    name: 'Wheels',
+    giver: 'dot',
+    type: 'story',
+    requires: 's3',
+    intro: 'Hauling by hand is for suckers. Get a truck.',
+    outro: 'Vroom. Take some gas money.',
+    stages: [
+      { text: 'Buy a vehicle', kind: 'buy', target: 'vehicle', count: 1 },
+      { text: 'Drive 500 meters', kind: 'drive', count: 500 },
+    ],
+    reward: { money: 2500, xp: 160, items: { fuel_can: 3 }, rep: 8 },
+  },
+  {
+    id: 's5',
+    name: 'Giants of the North',
+    giver: 'ivy',
+    type: 'story',
+    requires: 's4',
+    intro: "Redwood Valley has trees you won't believe. Bring back three.",
+    outro: "You're a real lumberjack now.",
+    stages: [
+      { text: 'Travel to Redwood Valley', kind: 'visit', target: 'redwood', count: 1 },
+      { text: 'Chop 3 redwood trees', kind: 'chop', target: 'redwood', count: 3 },
+      { text: 'Sell redwood planks', kind: 'plank', target: 'redwood', count: 6 },
+    ],
+    reward: { money: 8000, xp: 300, rep: 10 },
+  },
+  {
+    id: 's6',
+    name: 'Bog Business',
+    giver: 'nell',
+    type: 'story',
+    requires: 's5',
+    intro: "The swamp's mangroves float. Perfect for a barge. You need a boat.",
+    outro: 'Smooth sailing.',
+    stages: [
+      { text: 'Buy a rowboat', kind: 'buy', target: 'rowboat', count: 1 },
+      { text: 'Visit the Mire Swamp', kind: 'visit', target: 'swamp', count: 1 },
+      { text: 'Chop 5 mangrove trees', kind: 'chop', target: 'mangrove', count: 5 },
+    ],
+    reward: { money: 20000, xp: 500, items: { crate_rare: 1, key_rare: 1 }, rep: 12 },
+  },
+  {
+    id: 's7',
+    name: 'Cold Hard Cash',
+    giver: 'wanderer',
+    type: 'story',
+    requires: 's6',
+    intro: 'Gold grows in the Basin. Frost in the north. Bring me one of each.',
+    outro: "Interesting... you can see them, can't you?",
+    stages: [
+      { text: 'Chop a Gold tree', kind: 'chop', target: 'gold', count: 1 },
+      { text: 'Chop a Frost tree', kind: 'chop', target: 'frost', count: 1 },
+      { text: 'Earn $250,000 total', kind: 'earn', count: 250000 },
+    ],
+    reward: { money: 80000, xp: 900, rep: 15 },
+  },
+  {
+    id: 's8',
+    name: 'Into the Deep',
+    giver: 'ivy',
+    type: 'story',
+    requires: 's7',
+    intro: 'The Lone Deep Cave. A guardian tree sleeps there. End it.',
+    outro: "The forest breathes easier. You've earned your Empire.",
+    stages: [
+      { text: 'Defeat the Deep Guardian', kind: 'kill', target: 'deep_guardian', count: 1 },
+      { text: 'Sell a piece of Heartwood or keep it...', kind: 'talk', target: 'ivy', count: 1 },
+    ],
+    reward: { money: 1000000, xp: 5000, axe: 'founders_axe', rep: 25 },
+  },
+];
+
+export interface DailyTemplate {
+  id: string;
+  kind: QuestDef['stages'][number]['kind'];
+  target: (wood: string) => string | undefined;
+  text: (n: number, wood: string) => string;
+  base: number;
+  perTier: number;
+  reward: number;
+  type: 'daily' | 'weekly';
+}
+
+export const DAILY_TEMPLATES: DailyTemplate[] = [
+  {
+    id: 'chop',
+    kind: 'chop',
+    target: (w) => w,
+    text: (n, w) => `Chop ${n} ${w} trees`,
+    base: 6,
+    perTier: 2,
+    reward: 90,
+    type: 'daily',
+  },
+  {
+    id: 'plank',
+    kind: 'plank',
+    target: (w) => w,
+    text: (n, w) => `Saw ${n} ${w} planks`,
+    base: 20,
+    perTier: 4,
+    reward: 120,
+    type: 'daily',
+  },
+  {
+    id: 'sell',
+    kind: 'sell',
+    target: () => 'plank',
+    text: (n) => `Sell ${n} planks`,
+    base: 25,
+    perTier: 5,
+    reward: 110,
+    type: 'daily',
+  },
+  {
+    id: 'fish',
+    kind: 'fish',
+    target: () => undefined,
+    text: (n) => `Catch ${n} fish`,
+    base: 6,
+    perTier: 1,
+    reward: 100,
+    type: 'daily',
+  },
+  {
+    id: 'mine',
+    kind: 'mine',
+    target: () => undefined,
+    text: (n) => `Mine ${n} ore`,
+    base: 10,
+    perTier: 2,
+    reward: 140,
+    type: 'daily',
+  },
+  {
+    id: 'craft',
+    kind: 'craft',
+    target: () => undefined,
+    text: (n) => `Craft ${n} furniture`,
+    base: 4,
+    perTier: 1,
+    reward: 130,
+    type: 'daily',
+  },
+  {
+    id: 'earn',
+    kind: 'earn',
+    target: () => undefined,
+    text: (n) => `Earn $${n}`,
+    base: 1500,
+    perTier: 800,
+    reward: 150,
+    type: 'daily',
+  },
+  {
+    id: 'wchop',
+    kind: 'chop',
+    target: (w) => w,
+    text: (n, w) => `Weekly: chop ${n} ${w} trees`,
+    base: 60,
+    perTier: 12,
+    reward: 900,
+    type: 'weekly',
+  },
+  {
+    id: 'wearn',
+    kind: 'earn',
+    target: () => undefined,
+    text: (n) => `Weekly: earn $${n}`,
+    base: 30000,
+    perTier: 20000,
+    reward: 1200,
+    type: 'weekly',
+  },
+];
