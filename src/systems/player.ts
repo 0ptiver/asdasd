@@ -116,6 +116,26 @@ export class PlayerSystem implements System {
     return { ox, oy, oz, dx: dx / l, dy: dy / l, dz: dz / l };
   }
 
+  /** Ray through a screen point (NDC, +y up). nx=ny=0 is the crosshair ray. */
+  screenRay(nx: number, ny: number): { ox: number; oy: number; oz: number; dx: number; dy: number; dz: number } {
+    const base = this.cameraRay();
+    if (nx === 0 && ny === 0) return base;
+    // camera basis: forward f (toward target), right r, up u
+    const f = { x: base.dx, y: base.dy, z: base.dz };
+    const rx = -f.z, rz = f.x; // right = f × up (horizontal)
+    const rl = Math.hypot(rx, rz) || 1;
+    const r = { x: rx / rl, y: 0, z: rz / rl };
+    const u = { x: r.y * f.z - r.z * f.y, y: r.z * f.x - r.x * f.z, z: r.x * f.y - r.y * f.x };
+    const fov = ((this.sim.game.settings.fov ?? 70) * Math.PI) / 180;
+    const th = Math.tan(fov / 2);
+    const aspect = typeof window !== 'undefined' ? window.innerWidth / window.innerHeight : 16 / 9;
+    const dx = f.x + r.x * nx * th * aspect + u.x * ny * th;
+    const dy = f.y + r.y * nx * th * aspect + u.y * ny * th;
+    const dz = f.z + r.z * nx * th * aspect + u.z * ny * th;
+    const l = Math.hypot(dx, dy, dz);
+    return { ox: base.ox, oy: base.oy, oz: base.oz, dx: dx / l, dy: dy / l, dz: dz / l };
+  }
+
   grabReach(): number {
     let r = CONFIG.player.grabReach;
     if (this.sim.inventory?.equipped()?.def === 'gale_axe') r += 2;

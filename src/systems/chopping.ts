@@ -58,7 +58,7 @@ export class ChoppingSystem implements System {
     const st = sim.state;
     const pl = sim.player;
     const axe = sim.inventory.equipped();
-    const locked = pl.locked || inp.uiOpen || pl.mode !== 'foot';
+    const locked = pl.locked || inp.uiOpen || pl.mode !== 'foot' || sim.building.active;
     // DOT (poison/burn)
     for (const [id, d] of this.dots) {
       const t = sim.trees.trees.get(id);

@@ -1,6 +1,6 @@
 // node scripts/tour.mjs '[["name","js",waitMs],...]'
 import { chromium } from '@playwright/test';
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 const base = '/opt/pw-browsers';
 const dir = readdirSync(base).find((d) => d.startsWith('chromium-'));
 const exe = `${base}/${dir}/chrome-linux/chrome`;
@@ -29,7 +29,8 @@ await page.getByTestId('main-menu').waitFor({ timeout: 90000 });
 await page.getByTestId('new-0').click();
 await page.getByTestId('start-new').click();
 await page.getByTestId('hud').waitFor({ timeout: 90000 });
-for (const [name, js, wait = 1500] of shots) {
+for (const [name, js0, wait = 1500] of shots) {
+  const js = js0.startsWith('@') ? readFileSync(js0.slice(1), 'utf8') : js0;
   if (js) {
     const r = await page.evaluate(js);
     if (r !== undefined) console.log(name, 'eval:', JSON.stringify(r));

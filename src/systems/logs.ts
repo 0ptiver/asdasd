@@ -336,7 +336,7 @@ export class LogSystem implements System {
           // keep awake only if moving; Rapier sleeps automatically
         }
         if (l.age > CONFIG.physics.logDespawnSec || t.y < -80) {
-          if (!this.sim.plots?.insideOwnedPlot(t.x, t.z)) {
+          if (!this.sim.plots.insideOwnedPlot(t.x, t.z)) {
             this.removeLog(l.id);
             continue;
           }

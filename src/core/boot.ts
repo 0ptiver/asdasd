@@ -18,12 +18,15 @@ import { ControlsSystem } from '../systems/controls';
 import { ItemUseSystem } from '../systems/itemUse';
 import { QuestSystem } from '../systems/quests';
 import { BiomeSystem } from '../systems/biomeSystem';
+import { PlotSystem } from '../systems/plots';
+import { BuildingSystem } from '../systems/building';
 
 /** Assembles all simulation systems in dependency order. */
 export function buildSim(game: Game, state: GameState): Sim {
   const sim = new Sim(game, state);
   sim.econ = sim.add(new EconomySystem(sim));
   sim.streamer = sim.add(new Streamer(sim));
+  sim.plots = sim.add(new PlotSystem(sim, sim.streamer));
   sim.player = sim.add(new PlayerSystem(sim, sim.streamer));
   sim.trees = sim.add(new TreeSystem(sim, sim.streamer));
   sim.hub = sim.add(new HubSystem(sim, sim.streamer));
@@ -38,6 +41,7 @@ export function buildSim(game: Game, state: GameState): Sim {
   sim.itemUse = sim.add(new ItemUseSystem(sim));
   sim.quests = sim.add(new QuestSystem(sim));
   sim.biome = sim.add(new BiomeSystem(sim));
+  sim.building = sim.add(new BuildingSystem(sim));
   sim.add(new ControlsSystem(sim));
   return sim;
 }

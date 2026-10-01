@@ -11,6 +11,9 @@ import { PANELS } from './panelRegistry';
 import { ConsolePanel } from './panels/ConsolePanel';
 import { QuestPanel } from './panels/QuestPanel';
 import { MapPanel } from './panels/MapPanel';
+import { LandPanel } from './panels/LandPanel';
+import { ChestPanel } from './panels/ChestPanel';
+import { BuildBar } from './BuildBar';
 
 export function App() {
   useGame();
@@ -51,6 +54,12 @@ export function App() {
       case 'map':
         panel = <MapPanel />;
         break;
+      case 'land':
+        panel = <LandPanel />;
+        break;
+      case 'chest':
+        panel = <ChestPanel id={p.arg ?? ''} />;
+        break;
       case 'settings':
         panel = <SettingsPanel onClose={() => game.closePanel()} />;
         break;
@@ -63,6 +72,7 @@ export function App() {
   return (
     <>
       <Hud />
+      {game.sim.building.active && !p && <BuildBar />}
       {panel}
     </>
   );

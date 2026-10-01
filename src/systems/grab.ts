@@ -82,7 +82,7 @@ export class GrabSystem implements System {
     const sim = this.sim;
     const inp = sim.game.input;
     const pl = sim.player;
-    const locked = pl.locked || inp.uiOpen || pl.mode !== 'foot';
+    const locked = pl.locked || inp.uiOpen || pl.mode !== 'foot' || sim.building.active;
     this.hint = '';
     if (locked) {
       if (this.active) this.release();

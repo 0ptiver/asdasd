@@ -22,6 +22,8 @@ import type { BiomeSystem } from '../systems/biomeSystem';
 import { levelOf } from './skills';
 import type { SkillId } from '../data/types';
 import type { WorldMap } from '../ui/worldMap';
+import type { PlotSystem } from '../systems/plots';
+import type { BuildingSystem } from '../systems/building';
 
 export interface System {
   readonly name: string;
@@ -63,7 +65,8 @@ export class Sim {
     travel(id: string): boolean;
   };
   treasure?: { useMap(): boolean };
-  plots?: { insideOwnedPlot(x: number, z: number): boolean };
+  plots!: PlotSystem;
+  building!: BuildingSystem;
   private autosaveAcc = 0;
 
   constructor(

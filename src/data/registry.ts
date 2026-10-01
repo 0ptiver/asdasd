@@ -10,3 +10,4 @@ export * from './bosses';
 export * from './plots';
 export const QUESTS_ALL = STORY;
 export * from './quests';
+export * from './parts';

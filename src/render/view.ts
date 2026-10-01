@@ -9,6 +9,7 @@ import { TreeRenderer } from './treeRender';
 import { HubRender } from './hubRender';
 import { Human, makeAxeModel } from './models';
 import { LogRenderer } from './logRender';
+import { BuildRender } from './buildRender';
 import { Fx } from './fx';
 import { AXE_BY_ID, SKINS } from '../data/axes';
 import { NPCS } from '../data/npcs';
@@ -29,6 +30,7 @@ export class View {
   private chunkMeshes = new Map<string, THREE.Object3D[]>();
   private treeR: TreeRenderer | null = null;
   private logR: LogRenderer | null = null;
+  private buildR: BuildRender | null = null;
   private fx = new Fx();
   private heldKey = '';
   private hubR: HubRender | null = null;
@@ -103,6 +105,8 @@ export class View {
     this.logR = new LogRenderer(sim.logs, this.treeR);
     this.world.add(this.logR.group, this.fx.points);
     this.unsub.push(sim.bus.on('fx', (e) => this.fx.emit(e.kind, e.x, e.y, e.z, e.n ?? 8, e.color)));
+    this.buildR = new BuildRender(sim);
+    this.world.add(this.buildR.group);
     this.hubR = new HubRender(sim.hub.layout);
     this.world.add(this.hubR.group);
     this.playerModel = new Human({ shirt: 0xc0392b, pants: 0x3a4a6a, hat: 0x2a5a3a, beard: true });
@@ -140,6 +144,11 @@ export class View {
     this.chunkMeshes.clear();
     if (this.treeR) this.world.remove(this.treeR.group);
     if (this.hubR) this.world.remove(this.hubR.group);
+    if (this.buildR) {
+      this.buildR.dispose();
+      this.world.remove(this.buildR.group);
+    }
+    this.buildR = null;
     if (this.playerModel) this.world.remove(this.playerModel.root);
     for (const n of this.npcModels) this.world.remove(n.human.root);
     this.npcModels = [];
@@ -243,6 +252,7 @@ export class View {
     }
     this.hubR?.update(this.time, sim.sawmill.sawing);
     this.logR?.update();
+    this.buildR?.update(dt);
     this.fx.setScale(this.renderer.domElement.height);
     this.fx.update(dt);
     // held axe

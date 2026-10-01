@@ -5,6 +5,7 @@
 import { CONFIG } from '../config';
 import { fbm, noise2 } from '../core/rng';
 import { BIOMES, BIOME_BY_ID } from '../data/biomes';
+import { PLOTS } from '../data/plots';
 import { HUB, riverX, RIVER_WIDTH, BRIDGE_Z, BRIDGE, DOCK } from './layout';
 import type { BiomeDef, BiomeId } from '../data/types';
 
@@ -223,8 +224,33 @@ export class Terrain {
     }
   }
 
-  /** Walkable ground height at x,z (ground layer, ignoring sky islands). */
+  private plotBase = new Map<string, number>();
+  /** Max half-extent growth from expansions (kept in sync with PlotSystem). */
+  static readonly PLOT_GROW = 24;
+
+  /** Height with plots flattened for building. */
   heightAt(x: number, z: number): number {
+    const h = this.rawHeight(x, z);
+    for (const p of PLOTS) {
+      if (p.biome === 'sky') continue;
+      const hx = p.size[0] / 2 + Terrain.PLOT_GROW;
+      const hz = p.size[1] / 2 + Terrain.PLOT_GROW;
+      const dx = Math.abs(x - p.center[0]);
+      const dz = Math.abs(z - p.center[1]);
+      if (dx > hx + 14 || dz > hz + 14) continue;
+      let base = this.plotBase.get(p.id);
+      if (base === undefined) {
+        base = this.rawHeight(p.center[0], p.center[1]);
+        this.plotBase.set(p.id, base);
+      }
+      const k = (1 - smoothstep(0, 14, dx - hx)) * (1 - smoothstep(0, 14, dz - hz));
+      return lerp(h, base, k);
+    }
+    return h;
+  }
+
+  /** Walkable ground height at x,z (ground layer, ignoring sky islands and plots). */
+  rawHeight(x: number, z: number): number {
     const blend = this.biomeBlend(x, z);
     let h = 0;
     for (const w of blend.weights) {

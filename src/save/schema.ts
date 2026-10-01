@@ -48,6 +48,7 @@ export interface PlotState {
   blueprints: Record<string, PlacedPart[]>;
   sawmillLevel: number;
   chests: Record<string, ItemStack[]>;
+  texts: Record<string, string>;
   businesses: Record<string, { level: number; stock: number; lastCollect: number }>;
   outpost: { level: number; lastCollect: number };
 }
@@ -257,6 +258,7 @@ export function emptyPlot(): PlotState {
     blueprints: {},
     sawmillLevel: 0,
     chests: {},
+    texts: {},
     businesses: {},
     outpost: { level: 0, lastCollect: 0 },
   };

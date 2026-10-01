@@ -34,6 +34,14 @@ export class Input {
   aimX = 0.5; // normalized screen coords of the grab aim point (center by default)
   aimY = 0.5;
   touchAim = false;
+  /** Build mode: cursor is free (no pointer lock); RMB-drag orbits the camera. */
+  freeCursor = false;
+  mouseNX = 0; // cursor in NDC (-1..1), +y up
+  mouseNY = 0;
+  rmbClick = false;
+  private suppressLost = false;
+  private rmbDown = false;
+  private rmbTravel = 0;
   pointerLocked = false;
   touchMode = false;
   /** Set while a UI panel is open: gameplay input is ignored. */
@@ -65,7 +73,10 @@ export class Input {
     document.addEventListener('pointerlockchange', () => {
       const was = this.pointerLocked;
       this.pointerLocked = document.pointerLockElement === this.canvas;
-      if (was && !this.pointerLocked) this.onPointerLost?.();
+      if (was && !this.pointerLocked) {
+        if (this.suppressLost) this.suppressLost = false;
+        else this.onPointerLost?.();
+      }
     });
     canvas.addEventListener('touchstart', this.ts, { passive: false });
     canvas.addEventListener('touchmove', this.tm, { passive: false });
@@ -97,6 +108,15 @@ export class Input {
   };
   private md = (e: MouseEvent) => {
     if (this.uiOpen) return;
+    if (this.freeCursor) {
+      if (e.button === 0) this.primary = true;
+      if (e.button === 2) {
+        this.rmbDown = true;
+        this.rmbTravel = 0;
+        this.secondary = true;
+      }
+      return;
+    }
     if (!this.pointerLocked && !this.touchMode) {
       this.canvas.requestPointerLock?.();
       return;
@@ -106,9 +126,23 @@ export class Input {
   };
   private mu = (e: MouseEvent) => {
     if (e.button === 0) this.primary = false;
-    if (e.button === 2) this.secondary = false;
+    if (e.button === 2) {
+      this.secondary = false;
+      if (this.rmbDown && this.rmbTravel < 6) this.rmbClick = true;
+      this.rmbDown = false;
+    }
   };
   private mm = (e: MouseEvent) => {
+    this.mouseNX = (e.clientX / window.innerWidth) * 2 - 1;
+    this.mouseNY = -((e.clientY / window.innerHeight) * 2 - 1);
+    if (this.freeCursor) {
+      if (this.rmbDown) {
+        this.rmbTravel += Math.abs(e.movementX) + Math.abs(e.movementY);
+        this.lookDX += e.movementX;
+        this.lookDY += e.movementY;
+      }
+      return;
+    }
     if (!this.pointerLocked) return;
     this.lookDX += e.movementX;
     this.lookDY += e.movementY;
@@ -169,6 +203,10 @@ export class Input {
     const code = this.getSettings().keys[a];
     return (code !== undefined && this.down.has(code)) || this.touchBtn.has(a);
   }
+  /** Raw key held by KeyboardEvent.code (modifiers). */
+  rawHeld(code: string): boolean {
+    return this.down.has(code);
+  }
   /** Raw key edge by KeyboardEvent.code (hotbar digits etc). */
   rawPressed(code: string): boolean {
     return this.edge.has(code);
@@ -214,15 +252,19 @@ export class Input {
   /** Clear per-tick edge flags and accumulated deltas. */
   endTick(): void {
     this.edge.clear();
+    this.rmbClick = false;
     this.lookDX = 0;
     this.lookDY = 0;
     this.wheel = 0;
   }
 
   releasePointer(): void {
-    if (document.pointerLockElement) document.exitPointerLock();
+    if (document.pointerLockElement) {
+      this.suppressLost = true;
+      document.exitPointerLock();
+    }
   }
   requestPointer(): void {
-    if (!this.touchMode) this.canvas.requestPointerLock?.();
+    if (!this.touchMode && !this.freeCursor) this.canvas.requestPointerLock?.();
   }
 }

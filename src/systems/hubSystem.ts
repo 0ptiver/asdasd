@@ -17,6 +17,8 @@ export class HubSystem implements System {
   layout!: HubLayout;
   interactables: Interactable[] = [];
   nearest: Interactable | null = null;
+  /** dynamic interactables (built parts) */
+  extra: Interactable[] = [];
   private bodies: RAPIER.RigidBody[] = [];
 
   constructor(
@@ -84,7 +86,7 @@ export class HubSystem implements System {
     const p = this.sim.player;
     let best: Interactable | null = null;
     let bd = Infinity;
-    for (const it of this.interactables) {
+    for (const it of [...this.interactables, ...this.extra]) {
       const d = Math.hypot(it.x - p.x, it.z - p.z);
       if (d < it.radius && d < bd) {
         bd = d;
