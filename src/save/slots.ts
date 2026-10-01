@@ -82,6 +82,15 @@ export async function loadSettings(): Promise<Settings> {
   }
 }
 
+export async function hasSavedSettings(): Promise<boolean> {
+  try {
+    const d = await db();
+    return (await d.get('kv', 'settings')) !== undefined;
+  } catch {
+    return false;
+  }
+}
+
 export async function saveSettings(s: Settings): Promise<void> {
   try {
     const d = await db();

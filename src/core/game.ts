@@ -2,7 +2,7 @@ import { CONFIG } from '../config';
 import { EventBus } from './events';
 import { FixedLoop } from './loop';
 import { Input } from './input';
-import { loadSettings, saveSettings, saveSlot, listSlots, loadSlot } from '../save/slots';
+import { loadSettings, saveSettings, saveSlot, listSlots, loadSlot, hasSavedSettings } from '../save/slots';
 import { newGameState, type GameState, type Settings } from '../save/schema';
 import type { Sim } from './sim';
 import type { View } from '../render/view';
@@ -59,6 +59,14 @@ export class Game {
     this.canvas = canvas;
     progress(0.05, 'Loading settings…');
     this.settings = await loadSettings();
+    if (!(await hasSavedSettings())) {
+      // first run: pick a sensible graphics preset for this device
+      const mobile = navigator.maxTouchPoints > 0 && Math.min(window.innerWidth, window.innerHeight) < 800;
+      const weak = (navigator.hardwareConcurrency ?? 8) <= 4;
+      const q = mobile ? 'low' : weak ? 'low' : 'medium';
+      this.settings = { ...this.settings, quality: q, shadows: q !== 'low', viewChunks: q === 'low' ? 2 : 3 };
+      void saveSettings(this.settings);
+    }
     this.applySettings();
     this.input = new Input(canvas, () => this.settings);
     const unlock = () => this.sfx.unlock();

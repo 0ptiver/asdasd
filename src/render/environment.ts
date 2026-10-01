@@ -238,7 +238,7 @@ export class Environment {
     // moon light at night
     if (dl < 0.25) {
       this.sun.color.lerp(new THREE.Color(0x8aa0ff), 1 - dl * 4);
-      this.sun.intensity = Math.max(this.sun.intensity, 0.28 * (1 - c.indoor));
+      this.sun.intensity = Math.max(this.sun.intensity, 0.4 * (1 - c.indoor));
     }
     const dirY = Math.abs(this.sunDir.y) < 0.12 ? 0.12 : this.sunDir.y;
     const lightDir =
@@ -250,7 +250,7 @@ export class Environment {
     this.sun.target.position.copy(focus);
     this.hemi.color.copy(c.ambient).lerp(new THREE.Color(0x1a2040), (1 - dl) * 0.8);
     this.hemi.groundColor.copy(c.ambient).multiplyScalar(0.45);
-    this.hemi.intensity = (0.25 + 0.75 * dl) * (1 - this.weatherDark * 0.4) * (1 - c.indoor * 0.9) + 0.05;
+    this.hemi.intensity = (0.4 + 0.6 * dl) * (1 - this.weatherDark * 0.4) * (1 - c.indoor * 0.9) + 0.05;
     // headlamp / pet light
     const lampWant = headlamp ? 2.6 : 0;
     this.lamp.intensity += (lampWant - this.lamp.intensity) * Math.min(1, dt * 6);

@@ -31,12 +31,21 @@ export class LogicSystem implements System {
     return m;
   }
 
+  private logicPlots = new Set<string>();
+
   update(dt: number): void {
     this.tick++;
     this.clock += dt;
+    if (this.tick % 60 === 1) {
+      this.logicPlots.clear();
+      for (const [id, st] of Object.entries(this.sim.state.plots)) {
+        if (st.wires?.length || st.parts.some((p) => p[0] === 'piston' || p[0] === 'conveyor' || p[0] === 'timer' || p[0] === 'sensor')) this.logicPlots.add(id);
+      }
+    }
     const sim = this.sim;
     const pl = sim.player;
     for (const [plotId, st] of Object.entries(sim.state.plots)) {
+      if (!this.logicPlots.has(plotId)) continue;
       const wires = st.wires ?? [];
       const parts = this.byUid(plotId);
       if (!parts.size) continue;
