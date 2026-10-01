@@ -2,7 +2,7 @@
  * Hub town + landmarks as pure descriptions (render parts, solid colliders, interaction points, signs).
  * The render layer turns parts into merged meshes; the sim layer turns boxes into Rapier colliders.
  */
-import { HUB, BRIDGE, DOCK, riverX } from './layout';
+import { HUB, BRIDGE, DOCK, riverX, AIRFIELD } from './layout';
 import type { Terrain } from './terrain';
 
 export type PartDesc =
@@ -96,6 +96,7 @@ export interface HubLayout {
   sawIntake: Zone;
   garagePad: { x: number; y: number; z: number; yaw: number };
   boatPad: { x: number; y: number; z: number; yaw: number };
+  airPad: { x: number; y: number; z: number; yaw: number };
   lamps: { x: number; y: number; z: number }[];
   pierY: number;
 }
@@ -407,6 +408,63 @@ export function buildHub(terrain: Terrain): HubLayout {
   );
   s.points.push({ id: 'dock', label: 'Harbor', x: shoreProbe + 2, z: DOCK.z, radius: 6, kind: 'dock' });
 
+  // ---------------- airfield
+  const AY = terrain.heightAt(AIRFIELD.x, AIRFIELD.z);
+  s.parts.push({
+    t: 'box',
+    x: AIRFIELD.x,
+    y: AY + 0.1,
+    z: AIRFIELD.z,
+    w: AIRFIELD.hx * 2,
+    h: 0.2,
+    d: AIRFIELD.hz * 2,
+    c: 0x4a4a52,
+  });
+  for (let i = -AIRFIELD.hx + 6; i < AIRFIELD.hx - 6; i += 12)
+    s.parts.push({
+      t: 'box',
+      x: AIRFIELD.x + i,
+      y: AY + 0.22,
+      z: AIRFIELD.z,
+      w: 6,
+      h: 0.05,
+      d: 0.6,
+      c: 0xf4f4f4,
+    });
+  s.building(AIRFIELD.x - 40, AIRFIELD.z + 34, 22, 14, 7, 0xc8ccd4, 0x5a6270, AY, 'AIRFIELD HANGAR', [
+    AIRFIELD.x - 40,
+    AIRFIELD.z,
+  ]);
+  s.cyl(AIRFIELD.x + 62, AY, AIRFIELD.z + 22, 0.15, 6, 0xdddddd, 6);
+  s.parts.push({
+    t: 'cone',
+    x: AIRFIELD.x + 63.6,
+    y: AY + 5.6,
+    z: AIRFIELD.z + 22,
+    r: 0.7,
+    h: 3,
+    c: 0xff6a1a,
+    seg: 8,
+  });
+  s.points.push({
+    id: 'airfield',
+    label: 'Airfield',
+    x: AIRFIELD.x - 40,
+    z: AIRFIELD.z + 18,
+    radius: 8,
+    kind: 'shop',
+    arg: 'airfield',
+  });
+  s.points.push({
+    id: 'airfield2',
+    label: 'Airfield',
+    x: AIRFIELD.x + 20,
+    z: AIRFIELD.z + 22,
+    radius: 6,
+    kind: 'shop',
+    arg: 'airfield',
+  });
+
   return {
     parts: s.parts,
     boxes: s.boxes,
@@ -416,6 +474,7 @@ export function buildHub(terrain: Terrain): HubLayout {
     sawIntake,
     garagePad: { x: T.garage[0], y: Y, z: T.garage[1] + 13, yaw: 0 },
     boatPad: { x: shoreProbe + pierLen - 2, y: 0, z: DOCK.z + 7, yaw: Math.PI / 2 },
+    airPad: { x: AIRFIELD.x - AIRFIELD.hx + 12, y: AY, z: AIRFIELD.z, yaw: Math.PI / 2 },
     lamps: s.lamps,
     pierY,
   };

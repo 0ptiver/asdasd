@@ -14,6 +14,7 @@ import { MapPanel } from './panels/MapPanel';
 import { LandPanel } from './panels/LandPanel';
 import { ChestPanel } from './panels/ChestPanel';
 import { BuildBar } from './BuildBar';
+import { GaragePanel, HarborPanel, AirfieldPanel, GasPanel } from './panels/GaragePanel';
 
 export function App() {
   useGame();
@@ -27,14 +28,17 @@ export function App() {
         panel = <InventoryPanel />;
         break;
       case 'shop':
-        panel =
-          p.arg === 'tools' ? (
-            <ToolShop />
-          ) : p.arg === 'gear' ? (
-            <GearShop />
-          ) : (
-            (PANELS['shop:' + p.arg] ?? (() => null))()
-          );
+        if (p.arg === 'harbor') panel = <HarborPanel />;
+        else if (p.arg === 'airfield') panel = <AirfieldPanel />;
+        else
+          panel =
+            p.arg === 'tools' ? (
+              <ToolShop />
+            ) : p.arg === 'gear' ? (
+              <GearShop />
+            ) : (
+              (PANELS['shop:' + p.arg] ?? (() => null))()
+            );
         break;
       case 'sell':
         panel = <SellPanel />;
@@ -53,6 +57,12 @@ export function App() {
         break;
       case 'map':
         panel = <MapPanel />;
+        break;
+      case 'garage':
+        panel = <GaragePanel />;
+        break;
+      case 'gas':
+        panel = <GasPanel />;
         break;
       case 'land':
         panel = <LandPanel />;

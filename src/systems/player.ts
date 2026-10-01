@@ -117,12 +117,16 @@ export class PlayerSystem implements System {
   }
 
   /** Ray through a screen point (NDC, +y up). nx=ny=0 is the crosshair ray. */
-  screenRay(nx: number, ny: number): { ox: number; oy: number; oz: number; dx: number; dy: number; dz: number } {
+  screenRay(
+    nx: number,
+    ny: number,
+  ): { ox: number; oy: number; oz: number; dx: number; dy: number; dz: number } {
     const base = this.cameraRay();
     if (nx === 0 && ny === 0) return base;
     // camera basis: forward f (toward target), right r, up u
     const f = { x: base.dx, y: base.dy, z: base.dz };
-    const rx = -f.z, rz = f.x; // right = f × up (horizontal)
+    const rx = -f.z,
+      rz = f.x; // right = f × up (horizontal)
     const rl = Math.hypot(rx, rz) || 1;
     const r = { x: rx / rl, y: 0, z: rz / rl };
     const u = { x: r.y * f.z - r.z * f.y, y: r.z * f.x - r.x * f.z, z: r.x * f.y - r.y * f.x };
@@ -168,6 +172,7 @@ export class PlayerSystem implements System {
       if (k.endsWith('_t')) continue;
     }
     if (this.mode === 'vehicle') {
+      this.body.setNextKinematicTranslation({ x: this.x, y: -500, z: this.z });
       this.syncState();
       this.streamer.focus = { x: this.x, z: this.z };
       return;

@@ -24,6 +24,7 @@ import type { SkillId } from '../data/types';
 import type { WorldMap } from '../ui/worldMap';
 import type { PlotSystem } from '../systems/plots';
 import type { BuildingSystem } from '../systems/building';
+import type { VehicleSystem } from '../systems/vehicles';
 
 export interface System {
   readonly name: string;
@@ -57,7 +58,6 @@ export class Sim {
   quests!: QuestSystem;
   biome!: BiomeSystem;
   worldMap: WorldMap | null = null;
-  garage?: { give(id: string): boolean };
   jobs?: { render(): any };
   fastTravel?: {
     stations(): { id: string; x: number; z: number; unlocked: boolean }[];
@@ -67,6 +67,7 @@ export class Sim {
   treasure?: { useMap(): boolean };
   plots!: PlotSystem;
   building!: BuildingSystem;
+  vehicles!: VehicleSystem;
   private autosaveAcc = 0;
 
   constructor(
@@ -115,6 +116,11 @@ export class Sim {
   /** Positions that need nearby collision geometry (player, vehicles, ...). */
   actorPositions(): { x: number; z: number; r: number }[] {
     const out = [{ x: this.player.x, z: this.player.z, r: 26 }];
+    const cv = this.vehicles?.current;
+    if (cv) {
+      const t = cv.body.translation();
+      out.push({ x: t.x, z: t.z, r: 40 });
+    }
     return out;
   }
 

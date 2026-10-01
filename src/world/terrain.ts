@@ -6,7 +6,7 @@ import { CONFIG } from '../config';
 import { fbm, noise2 } from '../core/rng';
 import { BIOMES, BIOME_BY_ID } from '../data/biomes';
 import { PLOTS } from '../data/plots';
-import { HUB, riverX, RIVER_WIDTH, BRIDGE_Z, BRIDGE, DOCK } from './layout';
+import { HUB, riverX, RIVER_WIDTH, BRIDGE_Z, BRIDGE, DOCK, FLAT_ZONES } from './layout';
 import type { BiomeDef, BiomeId } from '../data/types';
 
 export const SEA_LEVEL = 0;
@@ -107,6 +107,23 @@ export function roadDist(x: number, z: number): number {
   return best;
 }
 export const ROAD_HALF = 4.2;
+export function railDist(x: number, z: number): number {
+  let best = 1e9;
+  for (let i = 0; i < RAIL.length - 1; i++) {
+    const a = RAIL[i]!;
+    const b = RAIL[i + 1]!;
+    if (
+      x < Math.min(a[0], b[0]) - 30 ||
+      x > Math.max(a[0], b[0]) + 30 ||
+      z < Math.min(a[1], b[1]) - 30 ||
+      z > Math.max(a[1], b[1]) + 30
+    )
+      continue;
+    const d = segDist(x, z, a, b);
+    if (d < best) best = d;
+  }
+  return best;
+}
 
 // ---------- biome ownership ----------
 export interface BiomeBlend {
@@ -231,6 +248,18 @@ export class Terrain {
   /** Height with plots flattened for building. */
   heightAt(x: number, z: number): number {
     const h = this.rawHeight(x, z);
+    for (const zn of FLAT_ZONES) {
+      const dx = Math.abs(x - zn.x),
+        dz = Math.abs(z - zn.z);
+      if (dx > zn.hx + 14 || dz > zn.hz + 14) continue;
+      let base = this.plotBase.get(zn.id);
+      if (base === undefined) {
+        base = this.rawHeight(zn.x, zn.z);
+        this.plotBase.set(zn.id, base);
+      }
+      const k = (1 - smoothstep(0, 14, dx - zn.hx)) * (1 - smoothstep(0, 14, dz - zn.hz));
+      return lerp(h, base, k);
+    }
     for (const p of PLOTS) {
       if (p.biome === 'sky') continue;
       const hx = p.size[0] / 2 + Terrain.PLOT_GROW;
@@ -267,6 +296,12 @@ export class Terrain {
     const hd = Math.hypot(x - HUB.center[0], z - HUB.center[1]);
     const hubK = 1 - smoothstep(HUB.flatRadius * 0.7, HUB.flatRadius * 1.25, hd);
     if (hubK > 0) h = lerp(h, 4, hubK);
+    // railway bed
+    const rl = railDist(x, z);
+    if (rl < ROAD_HALF * 2.5) {
+      const k = 1 - smoothstep(ROAD_HALF * 0.8, ROAD_HALF * 2.5, rl);
+      h = lerp(h, this.lowFreqHeight(x, z), k * 0.9);
+    }
     // river carve
     const rdv = riverDist(x, z);
     if (rdv < RIVER_WIDTH * 2.4) {

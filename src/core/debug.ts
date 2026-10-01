@@ -55,13 +55,13 @@ export function runCommand(game: Game, line: string): string {
       for (const a of AXES) if (!sim.state.axes.some((x) => x.def === a.id)) sim.inventory.giveAxe(a.id);
       for (const i of ITEMS) if (i.gearSlot) sim.inventory.add(i.id, 1);
       sim.econ.earn(1e9, 'debug');
-      for (const v of VEHICLES) sim.garage?.give(v.id);
+      for (const v of VEHICLES) sim.vehicles.give(v.id);
       return 'unlocked axes, gear, vehicles, +$1B';
     case 'xp':
       sim.addXp((args[0] ?? 'woodcutting') as any, num(1, 1000));
       return 'ok';
     case 'vehicle':
-      return sim.garage ? (sim.garage.give(args[0] ?? 'pickup') ? 'ok' : 'unknown vehicle') : 'no garage';
+      return sim.vehicles.give(args[0] ?? 'pickup') ? 'ok' : 'unknown vehicle';
     case 'heal':
       sim.state.player.hp = 100;
       sim.state.player.stamina = 100;

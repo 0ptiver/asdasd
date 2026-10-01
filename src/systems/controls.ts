@@ -8,7 +8,7 @@ export class ControlsSystem implements System {
   update(): void {
     const sim = this.sim;
     const inp = sim.game.input;
-    if (inp.uiOpen) return;
+    if (inp.uiOpen || sim.player.mode === 'vehicle') return;
     for (let i = 0; i < 8; i++) {
       if (inp.rawPressed('Digit' + (i + 1))) sim.inventory.selectHotbar(i);
     }

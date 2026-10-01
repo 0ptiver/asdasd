@@ -37,7 +37,12 @@ export class BuildRender {
   private accents = new Map<string, InstancePool>();
   private ghost: THREE.Mesh | null = null;
   private ghostKind = '';
-  private ghostMat = new THREE.MeshBasicMaterial({ color: 0x40ff60, transparent: true, opacity: 0.45, depthWrite: false });
+  private ghostMat = new THREE.MeshBasicMaterial({
+    color: 0x40ff60,
+    transparent: true,
+    opacity: 0.45,
+    depthWrite: false,
+  });
   private sel: THREE.LineSegments;
   private markers = new THREE.Group();
   private markerSig = '';
@@ -55,7 +60,10 @@ export class BuildRender {
   constructor(private sim: Sim) {
     const b = sim.building;
     this.group.add(this.markers);
-    this.sel = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xffe040 }));
+    this.sel = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)),
+      new THREE.LineBasicMaterial({ color: 0xffe040 }),
+    );
     this.sel.visible = false;
     this.group.add(this.sel);
     for (let i = 0; i < 4; i++) {
@@ -167,9 +175,15 @@ export class BuildRender {
   private addSign(b: Built): void {
     const text = this.sim.state.plots[b.plot]?.texts[String(b.p[10])] ?? 'Sign';
     const def = PART_BY_ID.sign!;
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry((def.size[0] - 0.24) * b.p[5], 0.44 * b.p[6]), new THREE.MeshBasicMaterial({ map: textTexture(text), side: THREE.DoubleSide }));
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry((def.size[0] - 0.24) * b.p[5], 0.44 * b.p[6]),
+      new THREE.MeshBasicMaterial({ map: textTexture(text), side: THREE.DoubleSide }),
+    );
     const [, x, y, z, ry] = b.p;
-    const off = new THREE.Vector3(0, (def.size[1] - 0.4) * b.p[6], 0.095 * b.p[7]).applyAxisAngle(new THREE.Vector3(0, 1, 0), ry);
+    const off = new THREE.Vector3(0, (def.size[1] - 0.4) * b.p[6], 0.095 * b.p[7]).applyAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      ry,
+    );
     mesh.position.set(x + off.x, y + off.y, z + off.z);
     mesh.rotation.y = ry;
     this.group.add(mesh);
@@ -207,7 +221,11 @@ export class BuildRender {
       this.sel.visible = true;
       this.sel.position.set(selB.p[1], selB.p[2] + (d.size[1] * selB.p[6]) / 2, selB.p[3]);
       this.sel.rotation.y = selB.p[4];
-      this.sel.scale.set(d.size[0] * selB.p[5] + 0.08, d.size[1] * selB.p[6] + 0.08, d.size[2] * selB.p[7] + 0.08);
+      this.sel.scale.set(
+        d.size[0] * selB.p[5] + 0.08,
+        d.size[1] * selB.p[6] + 0.08,
+        d.size[2] * selB.p[7] + 0.08,
+      );
     } else this.sel.visible = false;
     // markers
     const sig = PLOTS.map((p) => (sim.state.plots[p.id] ? sim.state.plots[p.id]!.sections : 0)).join('');
@@ -226,7 +244,8 @@ export class BuildRender {
           const k = b.p[0];
           if (k !== 'lamp' && k !== 'lantern') continue;
           const d = Math.hypot(b.p[1] - sim.player.x, b.p[3] - sim.player.z);
-          if (d < 60) cands.push({ x: b.p[1], y: b.p[2] + (PART_BY_ID[k]!.size[1] * b.p[6]) * 0.85, z: b.p[3], d });
+          if (d < 60)
+            cands.push({ x: b.p[1], y: b.p[2] + PART_BY_ID[k]!.size[1] * b.p[6] * 0.85, z: b.p[3], d });
         }
         cands.sort((a, b) => a.d - b.d);
       }
@@ -253,21 +272,37 @@ export class BuildRender {
         const y = def.biome === 'sky' ? (T.skyIslandHeight(x, z) ?? 220) : T.heightAt(x, z);
         p.box(0.2, h, 0.2, x, y + h / 2, z, 0x6a4a2a).box(0.26, 0.2, 0.26, x, y + h + 0.1, z, col);
       };
-      const stepX = 8, stepZ = 8;
-      for (let x = r.x0; x <= r.x1 + 0.1; x += (r.x1 - r.x0) / Math.max(1, Math.round((r.x1 - r.x0) / stepX))) {
+      const stepX = 8,
+        stepZ = 8;
+      for (
+        let x = r.x0;
+        x <= r.x1 + 0.1;
+        x += (r.x1 - r.x0) / Math.max(1, Math.round((r.x1 - r.x0) / stepX))
+      ) {
         post(x, r.z0);
         post(x, r.z1);
       }
-      for (let z = r.z0 + (r.z1 - r.z0) / Math.max(1, Math.round((r.z1 - r.z0) / stepZ)); z < r.z1 - 0.1; z += (r.z1 - r.z0) / Math.max(1, Math.round((r.z1 - r.z0) / stepZ))) {
+      for (
+        let z = r.z0 + (r.z1 - r.z0) / Math.max(1, Math.round((r.z1 - r.z0) / stepZ));
+        z < r.z1 - 0.1;
+        z += (r.z1 - r.z0) / Math.max(1, Math.round((r.z1 - r.z0) / stepZ))
+      ) {
         post(r.x0, z);
         post(r.x1, z);
       }
       if (!owned) {
-        const cx = def.center[0], cz = r.z1 + 1.5;
+        const cx = def.center[0],
+          cz = r.z1 + 1.5;
         const y = def.biome === 'sky' ? (T.skyIslandHeight(cx, cz) ?? 220) : T.heightAt(cx, cz);
         p.box(0.25, 3.4, 0.25, cx, y + 1.7, cz, 0x4a3220);
         p.box(3.2, 1.3, 0.2, cx, y + 3.2, cz, 0xe8d8a8);
-        const lbl = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 1.1), new THREE.MeshBasicMaterial({ map: textTexture(`${def.name}  $${def.price.toLocaleString()}`), side: THREE.DoubleSide }));
+        const lbl = new THREE.Mesh(
+          new THREE.PlaneGeometry(3.0, 1.1),
+          new THREE.MeshBasicMaterial({
+            map: textTexture(`${def.name}  $${def.price.toLocaleString()}`),
+            side: THREE.DoubleSide,
+          }),
+        );
         lbl.position.set(cx, y + 3.2, cz + 0.12);
         this.markers.add(lbl);
       }

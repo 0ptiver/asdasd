@@ -10,8 +10,14 @@ export function ChestPanel({ id }: { id: string }) {
   if (!chest) return null;
   const inv = game.state!.inv.slots;
   const slotBtn = (s: { id: string; n: number }, onClick: () => void) => (
-    <div class="hotslot clickable" style={{ width: '62px', height: '62px', background: colorOf(s.id) + '55' }} title={itemName(s.id)} onClick={onClick}>
-      <div style="font-size:1.5rem">{iconOf(s.id)}</div><div style="position:absolute;right:3px;bottom:1px;font-size:0.72rem;font-weight:800">{s.n}</div>
+    <div
+      class="hotslot clickable"
+      style={{ width: '62px', height: '62px', background: colorOf(s.id) + '55' }}
+      title={itemName(s.id)}
+      onClick={onClick}
+    >
+      <div style="font-size:1.5rem">{iconOf(s.id)}</div>
+      <div style="position:absolute;right:3px;bottom:1px;font-size:0.72rem;font-weight:800">{s.n}</div>
     </div>
   );
   const moveToChest = (i: number) => {
@@ -34,8 +40,14 @@ export function ChestPanel({ id }: { id: string }) {
   return (
     <Panel title="Storage Chest" wide>
       <div class="body" style="display:flex;gap:16px;flex-wrap:wrap">
-        <div style="flex:1;min-width:260px"><h4>Chest ({chest.length}/40)</h4><div class="row">{chest.map((s, i) => slotBtn(s, () => takeFromChest(i)))}</div></div>
-        <div style="flex:1;min-width:260px"><h4>Your items (click to store)</h4><div class="row">{inv.map((s, i) => (s ? slotBtn(s, () => moveToChest(i)) : null))}</div></div>
+        <div style="flex:1;min-width:260px">
+          <h4>Chest ({chest.length}/40)</h4>
+          <div class="row">{chest.map((s, i) => slotBtn(s, () => takeFromChest(i)))}</div>
+        </div>
+        <div style="flex:1;min-width:260px">
+          <h4>Your items (click to store)</h4>
+          <div class="row">{inv.map((s, i) => (s ? slotBtn(s, () => moveToChest(i)) : null))}</div>
+        </div>
       </div>
     </Panel>
   );

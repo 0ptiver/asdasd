@@ -20,6 +20,7 @@ import { QuestSystem } from '../systems/quests';
 import { BiomeSystem } from '../systems/biomeSystem';
 import { PlotSystem } from '../systems/plots';
 import { BuildingSystem } from '../systems/building';
+import { VehicleSystem } from '../systems/vehicles';
 
 /** Assembles all simulation systems in dependency order. */
 export function buildSim(game: Game, state: GameState): Sim {
@@ -42,6 +43,7 @@ export function buildSim(game: Game, state: GameState): Sim {
   sim.quests = sim.add(new QuestSystem(sim));
   sim.biome = sim.add(new BiomeSystem(sim));
   sim.building = sim.add(new BuildingSystem(sim));
+  sim.vehicles = sim.add(new VehicleSystem(sim));
   sim.add(new ControlsSystem(sim));
   return sim;
 }

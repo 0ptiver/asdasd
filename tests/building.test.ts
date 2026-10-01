@@ -52,7 +52,8 @@ describe('land & building', () => {
     sim.player.teleport(c[0], c[1] + 8);
     run(sim, 1);
     // a long wall east-west across z=c[1]
-    for (let i = -2; i <= 2; i++) sim.building.place('hub1', wall(c[0] + i * 4, c[1], sim.streamer.terrain.heightAt(c[0], c[1])));
+    for (let i = -2; i <= 2; i++)
+      sim.building.place('hub1', wall(c[0] + i * 4, c[1], sim.streamer.terrain.heightAt(c[0], c[1])));
     run(sim, 1);
     expect([...sim.building.built.values()].every((b) => b.body)).toBe(true);
     const input = (sim.game as any).input;

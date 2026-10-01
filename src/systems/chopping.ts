@@ -208,6 +208,21 @@ export class ChoppingSystem implements System {
     }
   }
 
+  /** Damage from a mech arm (no durability, no ability effects). */
+  mechHit(t: Tree, dmg: number): void {
+    const sim = this.sim;
+    sim.bus.emit('sfx', { name: 'chop', x: t.x, y: t.y + 1.2, z: t.z, vol: 0.8 });
+    sim.bus.emit('fx', {
+      kind: 'chips',
+      x: t.x,
+      y: t.y + 1.2,
+      z: t.z,
+      color: WOOD_BY_ID[t.wood]!.color,
+      n: 10,
+    });
+    this.applyDamage(t, dmg, false, null, false);
+  }
+
   private applyDamage(
     t: Tree,
     dmg: number,

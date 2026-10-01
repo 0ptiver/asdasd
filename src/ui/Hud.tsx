@@ -172,6 +172,35 @@ export function Hud() {
           </div>
         </div>
       )}
+      {sim.vehicles.current && (
+        <div class="hud-bl" style="bottom:90px;width:260px" data-testid="veh-hud">
+          <div class="hud-chip">
+            <div style="font-size:1.6rem;font-weight:900">
+              {Math.abs(Math.round(sim.vehicles.current.speed * 3.6))}{' '}
+              <span style="font-size:0.8rem">km/h</span>
+            </div>
+            <div style="font-size:0.78rem">
+              ⛽{' '}
+              <span style="display:inline-block;width:150px;vertical-align:middle" class="bar amber">
+                <i
+                  style={{
+                    width: `${(sim.vehicles.current.owned.fuel / Math.max(1, sim.vehicles.stats(sim.vehicles.current).fuelCap)) * 100}%`,
+                  }}
+                />
+              </span>
+            </div>
+            <div style="font-size:0.78rem">
+              🔧{' '}
+              <span style="display:inline-block;width:150px;vertical-align:middle" class="bar red">
+                <i style={{ width: `${sim.vehicles.current.owned.hp}%` }} />
+              </span>
+            </div>
+            <div style="font-size:0.72rem;color:var(--parch-dim)">
+              {sim.vehicles.current.trailer ? '🔗 trailer hitched · ' : ''}[R] hitch · [V] camera · [E] exit
+            </div>
+          </div>
+        </div>
+      )}
       <Toasts />
       <TouchControls />
       <div class="hud-br">

@@ -36,7 +36,11 @@ export interface Ghost {
 }
 
 const QUERY = grp(G.PLAYER, G.GROUND | G.BUILD);
-const woodIndex = (id: string): number => Math.max(0, WOODS.findIndex((w) => w.id === id));
+const woodIndex = (id: string): number =>
+  Math.max(
+    0,
+    WOODS.findIndex((w) => w.id === id),
+  );
 
 /** Freeform plot building: placement with snapping, selection/move/rotate/scale, undo/redo, blueprints, colliders. */
 export class BuildingSystem implements System {
@@ -78,7 +82,14 @@ export class BuildingSystem implements System {
 
   // --------------------------------------------------------------- registry
   private register(plot: string, p: PlacedPart, withCollider: boolean): Built {
-    const b: Built = { id: this.nextId++, plot, p, body: null, open: p[10] === 1 && PART_BY_ID[p[0]]?.interactive === 'door', power: false };
+    const b: Built = {
+      id: this.nextId++,
+      plot,
+      p,
+      body: null,
+      open: p[10] === 1 && PART_BY_ID[p[0]]?.interactive === 'door',
+      power: false,
+    };
     this.built.set(b.id, b);
     if (withCollider) this.addCollider(b);
     for (const f of this.onAdd) f(b);
@@ -154,7 +165,8 @@ export class BuildingSystem implements System {
   private refund(c: { items: Record<string, number>; money: number }): void {
     for (const [id, n] of Object.entries(c.items)) {
       const left = this.sim.inventory.add(id, n);
-      if (left) this.sim.bus.emit('notify', { text: `Inventory full — lost ${left}× ${itemName(id)}`, kind: 'bad' });
+      if (left)
+        this.sim.bus.emit('notify', { text: `Inventory full — lost ${left}× ${itemName(id)}`, kind: 'bad' });
     }
     if (c.money) this.sim.econ.earn(Math.round(c.money * 0.5), 'refund');
   }
@@ -167,14 +179,31 @@ export class BuildingSystem implements System {
     const st = this.sim.state.plots[plot];
     if (!st) return 'You do not own this plot';
     if (st.parts.length >= this.sim.plots.partCap(plot)) return 'Part limit reached for this plot';
-    if (def.unlock && levelOf(this.sim.state.skills.crafting) < def.unlock) return `Needs Crafting level ${def.unlock}`;
+    if (def.unlock && levelOf(this.sim.state.skills.crafting) < def.unlock)
+      return `Needs Crafting level ${def.unlock}`;
     if (!opts.free) {
       const cost = this.costOfPart(p);
       if (!this.pay(cost)) return 'Not enough materials';
     }
     // dup check
-    for (const o of st.parts) if (o[0] === p[0] && Math.abs(o[1] - p[1]) < 0.05 && Math.abs(o[2] - p[2]) < 0.05 && Math.abs(o[3] - p[3]) < 0.05 && Math.abs(o[4] - p[4]) < 0.05) return 'Already placed here';
-    if ((p[0] === 'chest' || p[0] === 'sign' || def.interactive === 'sawmill' || def.interactive === 'sellstand' || def.interactive === 'workbench') && p[10] === undefined) p[10] = this.sim.state.world.nextUid++;
+    for (const o of st.parts)
+      if (
+        o[0] === p[0] &&
+        Math.abs(o[1] - p[1]) < 0.05 &&
+        Math.abs(o[2] - p[2]) < 0.05 &&
+        Math.abs(o[3] - p[3]) < 0.05 &&
+        Math.abs(o[4] - p[4]) < 0.05
+      )
+        return 'Already placed here';
+    if (
+      (p[0] === 'chest' ||
+        p[0] === 'sign' ||
+        def.interactive === 'sawmill' ||
+        def.interactive === 'sellstand' ||
+        def.interactive === 'workbench') &&
+      p[10] === undefined
+    )
+      p[10] = this.sim.state.world.nextUid++;
     if (p[0] === 'sign') st.texts[String(p[10])] = this.signText;
     st.parts.push(p);
     const near = Math.hypot(p[1] - this.sim.player.x, p[3] - this.sim.player.z) < 200;
@@ -199,7 +228,8 @@ export class BuildingSystem implements System {
         return false;
       }
     }
-    if (def.interactive === 'sawmill' || def.interactive === 'sellstand') delete st.businesses[String(b.p[10] ?? '')];
+    if (def.interactive === 'sawmill' || def.interactive === 'sellstand')
+      delete st.businesses[String(b.p[10] ?? '')];
     this.dropCollider(b);
     const i = st.parts.indexOf(b.p);
     if (i >= 0) st.parts.splice(i, 1);
@@ -213,7 +243,21 @@ export class BuildingSystem implements System {
   }
 
   /** Edit a placed part's transform/paint. */
-  edit(id: number, patch: Partial<{ x: number; y: number; z: number; ry: number; sx: number; sy: number; sz: number; color: number; mat: number }>, record = true): boolean {
+  edit(
+    id: number,
+    patch: Partial<{
+      x: number;
+      y: number;
+      z: number;
+      ry: number;
+      sx: number;
+      sy: number;
+      sz: number;
+      color: number;
+      mat: number;
+    }>,
+    record = true,
+  ): boolean {
     const b = this.built.get(id);
     if (!b) return false;
     const before = [...b.p] as PlacedPart;
@@ -259,7 +303,22 @@ export class BuildingSystem implements System {
       if (typeof r !== 'string') this.undoStack.length && void 0;
     } else {
       const b = this.built.get(op.id);
-      if (b) this.edit(op.id, { x: op.before[1], y: op.before[2], z: op.before[3], ry: op.before[4], sx: op.before[5], sy: op.before[6], sz: op.before[7], color: op.before[8], mat: op.before[9] }, false);
+      if (b)
+        this.edit(
+          op.id,
+          {
+            x: op.before[1],
+            y: op.before[2],
+            z: op.before[3],
+            ry: op.before[4],
+            sx: op.before[5],
+            sy: op.before[6],
+            sz: op.before[7],
+            color: op.before[8],
+            mat: op.before[9],
+          },
+          false,
+        );
     }
     this.redoStack.push(op);
   }
@@ -271,10 +330,31 @@ export class BuildingSystem implements System {
       if (typeof r !== 'string') op.id = r.id;
     } else if (op.t === 'remove') {
       const st = this.sim.state.plots[op.plot];
-      const b = [...this.built.values()].find((x) => x.plot === op.plot && st?.parts.includes(x.p) && x.p[1] === op.p[1] && x.p[3] === op.p[3] && x.p[0] === op.p[0]);
+      const b = [...this.built.values()].find(
+        (x) =>
+          x.plot === op.plot &&
+          st?.parts.includes(x.p) &&
+          x.p[1] === op.p[1] &&
+          x.p[3] === op.p[3] &&
+          x.p[0] === op.p[0],
+      );
       if (b) this.remove(b.id, false);
     } else {
-      this.edit(op.id, { x: op.after[1], y: op.after[2], z: op.after[3], ry: op.after[4], sx: op.after[5], sy: op.after[6], sz: op.after[7], color: op.after[8], mat: op.after[9] }, false);
+      this.edit(
+        op.id,
+        {
+          x: op.after[1],
+          y: op.after[2],
+          z: op.after[3],
+          ry: op.after[4],
+          sx: op.after[5],
+          sy: op.after[6],
+          sz: op.after[7],
+          color: op.after[8],
+          mat: op.after[9],
+        },
+        false,
+      );
     }
     this.undoStack.push(op);
   }
@@ -285,7 +365,22 @@ export class BuildingSystem implements System {
     if (!st || !name) return 0;
     const def = PLOT_BY_ID[plot]!;
     const [cx, cz] = def.center;
-    const parts = st.parts.map((p) => [p[0], round(p[1] - cx), round(p[2]), round(p[3] - cz), p[4], p[5], p[6], p[7], p[8], p[9], p[10]] as PlacedPart);
+    const parts = st.parts.map(
+      (p) =>
+        [
+          p[0],
+          round(p[1] - cx),
+          round(p[2]),
+          round(p[3] - cz),
+          p[4],
+          p[5],
+          p[6],
+          p[7],
+          p[8],
+          p[9],
+          p[10],
+        ] as PlacedPart,
+    );
     st.blueprints[name] = parts;
     this.sim.bus.emit('notify', { text: `Blueprint "${name}" saved (${parts.length} parts)`, kind: 'good' });
     return parts.length;
@@ -306,15 +401,30 @@ export class BuildingSystem implements System {
     if (!st || !bp) return 'No such blueprint';
     const need = this.blueprintCost(bp);
     for (const [k, v] of Object.entries(need)) {
-      if (k === 'money' ? this.sim.state.money < v : !this.sim.inventory.has(k, v)) return `Missing materials: ${k === 'money' ? '$' + v : v + '× ' + itemName(k)}`;
+      if (k === 'money' ? this.sim.state.money < v : !this.sim.inventory.has(k, v))
+        return `Missing materials: ${k === 'money' ? '$' + v : v + '× ' + itemName(k)}`;
     }
     if (st.parts.length + bp.length > this.sim.plots.partCap(plot)) return 'Would exceed the plot part limit';
     const gy = this.sim.streamer.terrain.heightAt(ox, oz);
-    const s = Math.sin(yaw), c = Math.cos(yaw);
+    const s = Math.sin(yaw),
+      c = Math.cos(yaw);
     let placed = 0;
     for (const p of bp) {
-      const rx = p[1] * c + p[3] * s, rz = -p[1] * s + p[3] * c;
-      const q: PlacedPart = [p[0], ox + rx, gy + p[2], oz + rz, p[4] + yaw, p[5], p[6], p[7], p[8], p[9], p[0] === 'chest' || p[0] === 'sign' ? undefined : p[10]];
+      const rx = p[1] * c + p[3] * s,
+        rz = -p[1] * s + p[3] * c;
+      const q: PlacedPart = [
+        p[0],
+        ox + rx,
+        gy + p[2],
+        oz + rz,
+        p[4] + yaw,
+        p[5],
+        p[6],
+        p[7],
+        p[8],
+        p[9],
+        p[0] === 'chest' || p[0] === 'sign' ? undefined : p[10],
+      ];
       const r = this.place(plot, q, { record: false });
       if (typeof r !== 'string') placed++;
     }
@@ -370,21 +480,33 @@ export class BuildingSystem implements System {
   }
 
   /** Ray vs oriented part box (slab test). Returns distance or -1. */
-  private rayPart(b: Built, o: { x: number; y: number; z: number }, d: { x: number; y: number; z: number }): number {
+  private rayPart(
+    b: Built,
+    o: { x: number; y: number; z: number },
+    d: { x: number; y: number; z: number },
+  ): number {
     const def = this.def(b);
     const [, x, y, z, ry, sx, sy, sz] = b.p;
-    const c = Math.cos(-ry), s = Math.sin(-ry);
-    const lx = o.x - x, ly = o.y - (y + (def.size[1] * sy) / 2), lz = o.z - z;
-    const ox = lx * c + lz * s, oz = -lx * s + lz * c;
-    const dx = d.x * c + d.z * s, dz = -d.x * s + d.z * c;
+    const c = Math.cos(-ry),
+      s = Math.sin(-ry);
+    const lx = o.x - x,
+      ly = o.y - (y + (def.size[1] * sy) / 2),
+      lz = o.z - z;
+    const ox = lx * c + lz * s,
+      oz = -lx * s + lz * c;
+    const dx = d.x * c + d.z * s,
+      dz = -d.x * s + d.z * c;
     const h = [(def.size[0] * sx) / 2, (def.size[1] * sy) / 2, (def.size[2] * sz) / 2] as const;
-    let t0 = 0, t1 = 1e9;
-    const O = [ox, ly, oz], D = [dx, d.y, dz];
+    let t0 = 0,
+      t1 = 1e9;
+    const O = [ox, ly, oz],
+      D = [dx, d.y, dz];
     for (let i = 0; i < 3; i++) {
       if (Math.abs(D[i]!) < 1e-9) {
         if (Math.abs(O[i]!) > h[i]!) return -1;
       } else {
-        let a = (-h[i]! - O[i]!) / D[i]!, bb = (h[i]! - O[i]!) / D[i]!;
+        let a = (-h[i]! - O[i]!) / D[i]!,
+          bb = (h[i]! - O[i]!) / D[i]!;
         if (a > bb) [a, bb] = [bb, a];
         t0 = Math.max(t0, a);
         t1 = Math.min(t1, bb);
@@ -422,8 +544,10 @@ export class BuildingSystem implements System {
   }
 
   halfExtents(def: PartDef, ry: number, s: [number, number, number]): { hx: number; hz: number; h: number } {
-    const w = (def.size[0] * s[0]) / 2, d = (def.size[2] * s[2]) / 2;
-    const c = Math.abs(Math.cos(ry)), si = Math.abs(Math.sin(ry));
+    const w = (def.size[0] * s[0]) / 2,
+      d = (def.size[2] * s[2]) / 2;
+    const c = Math.abs(Math.cos(ry)),
+      si = Math.abs(Math.sin(ry));
     return { hx: c * w + si * d, hz: si * w + c * d, h: def.size[1] * s[1] };
   }
 
@@ -447,7 +571,9 @@ export class BuildingSystem implements System {
       g.reason = 'Aim at the ground';
       return;
     }
-    const px = r.ox + r.dx * hit.timeOfImpact, py = r.oy + r.dy * hit.timeOfImpact, pz = r.oz + r.dz * hit.timeOfImpact;
+    const px = r.ox + r.dx * hit.timeOfImpact,
+      py = r.oy + r.dy * hit.timeOfImpact,
+      pz = r.oz + r.dz * hit.timeOfImpact;
     const n = hit.normal;
     const other = this.colliderMap.get(hit.collider.handle);
     const sn = this.snap;
@@ -474,7 +600,11 @@ export class BuildingSystem implements System {
       } else y = py;
     } else {
       const T = sim.streamer.terrain;
-      y = Math.max(T.surfaceAt(x, z, py + 1), T.surfaceAt(x - ext.hx, z - ext.hz, py + 1), T.surfaceAt(x + ext.hx, z + ext.hz, py + 1));
+      y = Math.max(
+        T.surfaceAt(x, z, py + 1),
+        T.surfaceAt(x - ext.hx, z - ext.hz, py + 1),
+        T.surfaceAt(x + ext.hx, z + ext.hz, py + 1),
+      );
       if (hit.collider && n.y < 0.5) y = Math.max(y, py);
     }
     y += this.yOff;
@@ -490,7 +620,12 @@ export class BuildingSystem implements System {
       return;
     }
     const rc = sim.plots.rect(plot);
-    if (x - ext.hx < rc.x0 - 0.01 || x + ext.hx > rc.x1 + 0.01 || z - ext.hz < rc.z0 - 0.01 || z + ext.hz > rc.z1 + 0.01) {
+    if (
+      x - ext.hx < rc.x0 - 0.01 ||
+      x + ext.hx > rc.x1 + 0.01 ||
+      z - ext.hz < rc.z0 - 0.01 ||
+      z + ext.hz > rc.z1 + 0.01
+    ) {
       g.valid = false;
       g.reason = 'Outside the plot boundary';
       return;
@@ -509,7 +644,12 @@ export class BuildingSystem implements System {
     const cost = this.costOf(def);
     if (!this.canAfford(cost)) {
       g.valid = false;
-      g.reason = 'Not enough: ' + Object.entries(cost.items).map(([k, v]) => `${v}× ${itemName(k)}`).join(', ') + (cost.money ? ` $${cost.money}` : '');
+      g.reason =
+        'Not enough: ' +
+        Object.entries(cost.items)
+          .map(([k, v]) => `${v}× ${itemName(k)}`)
+          .join(', ') +
+        (cost.money ? ` $${cost.money}` : '');
       return;
     }
     g.valid = true;
@@ -519,7 +659,19 @@ export class BuildingSystem implements System {
   private currentPart(): PlacedPart {
     const g = this.ghost;
     const def = PART_BY_ID[this.kind]!;
-    return [this.kind, g.x, g.y, g.z, this.rot, this.scale[0], this.scale[1], this.scale[2], this.color, woodIndex(this.wood), this.kind === 'sign' ? undefined : undefined] as PlacedPart;
+    return [
+      this.kind,
+      g.x,
+      g.y,
+      g.z,
+      this.rot,
+      this.scale[0],
+      this.scale[1],
+      this.scale[2],
+      this.color,
+      woodIndex(this.wood),
+      this.kind === 'sign' ? undefined : undefined,
+    ] as PlacedPart;
     void def;
   }
 
@@ -540,11 +692,13 @@ export class BuildingSystem implements System {
     if (inp.rawPressed('KeyY') && ctrl) this.redo();
     if (inp.rawPressed('KeyC') && ctrl) this.copy();
     if (inp.rawPressed('KeyV') && ctrl) this.paste();
-    if (inp.rawPressed('Tab')) this.tool = this.tool === 'place' ? 'select' : this.tool === 'select' ? 'delete' : 'place';
+    if (inp.rawPressed('Tab'))
+      this.tool = this.tool === 'place' ? 'select' : this.tool === 'select' ? 'delete' : 'place';
     if (inp.rawPressed('Delete') || inp.rawPressed('Backspace')) this.deleteSelected();
     if (inp.rawPressed('BracketRight')) this.resize(1.1);
     if (inp.rawPressed('BracketLeft')) this.resize(1 / 1.1);
-    if (inp.rawPressed('KeyX')) this.snap = this.snap === 1 ? 0.5 : this.snap === 0.5 ? 0.25 : this.snap === 0.25 ? 2 : 1;
+    if (inp.rawPressed('KeyX'))
+      this.snap = this.snap === 1 ? 0.5 : this.snap === 0.5 ? 0.25 : this.snap === 0.25 ? 2 : 1;
     if (inp.wheel !== 0 && (shift || this.tool === 'place')) {
       this.yOff = Math.max(-2, Math.min(12, this.yOff + (inp.wheel < 0 ? 0.25 : -0.25)));
       if (this.tool === 'place') sim.player.camDist -= inp.wheel * 0.8; // undo the zoom side-effect
@@ -555,7 +709,8 @@ export class BuildingSystem implements System {
       if (b) {
         const s = this.snap;
         const yaw = sim.player.camYaw;
-        const fx = Math.round(-Math.sin(yaw)), fz = Math.round(-Math.cos(yaw));
+        const fx = Math.round(-Math.sin(yaw)),
+          fz = Math.round(-Math.cos(yaw));
         if (inp.rawPressed('ArrowUp')) this.edit(b.id, { x: b.p[1] + fx * s, z: b.p[3] + fz * s });
         if (inp.rawPressed('ArrowDown')) this.edit(b.id, { x: b.p[1] - fx * s, z: b.p[3] - fz * s });
         if (inp.rawPressed('ArrowLeft')) this.edit(b.id, { x: b.p[1] + fz * s, z: b.p[3] - fx * s });
@@ -590,7 +745,6 @@ export class BuildingSystem implements System {
       const p = this.currentPart();
       const r = this.place(g.plot, p);
       if (typeof r === 'string') this.sim.bus.emit('notify', { text: r, kind: 'bad' });
-
     } else if (this.tool === 'select') {
       const b = this.pickPart();
       this.selection = b?.id ?? null;
@@ -626,7 +780,13 @@ export class BuildingSystem implements System {
     this.clipboard = [];
     for (const o of this.built.values()) {
       if (o.plot !== b.plot) continue;
-      if (Math.hypot(o.p[1] - b.p[1], o.p[3] - b.p[3]) <= 6 && Math.abs(o.p[2] - b.p[2]) < 8) this.clipboard.push({ p: [...o.p] as PlacedPart, dx: o.p[1] - b.p[1], dy: o.p[2] - b.p[2], dz: o.p[3] - b.p[3] });
+      if (Math.hypot(o.p[1] - b.p[1], o.p[3] - b.p[3]) <= 6 && Math.abs(o.p[2] - b.p[2]) < 8)
+        this.clipboard.push({
+          p: [...o.p] as PlacedPart,
+          dx: o.p[1] - b.p[1],
+          dy: o.p[2] - b.p[2],
+          dz: o.p[3] - b.p[3],
+        });
     }
     this.sim.bus.emit('notify', { text: `Copied ${this.clipboard.length} part(s)`, kind: 'info' });
   }
@@ -637,7 +797,8 @@ export class BuildingSystem implements System {
       this.computeGhost();
     }
     if (!g.plot) return;
-    const s = Math.sin(this.rot), c = Math.cos(this.rot);
+    const s = Math.sin(this.rot),
+      c = Math.cos(this.rot);
     let n = 0;
     for (const e of this.clipboard) {
       const p = [...e.p] as PlacedPart;
@@ -670,8 +831,23 @@ export class BuildingSystem implements System {
       const dist = Math.hypot(b.p[1] - p.x, b.p[3] - p.z);
       if (dist > 14) continue;
       list.push({
-        id: 'part:' + b.id, label: d.interactive === 'door' ? (b.open ? 'Close door' : 'Open door') : d.id === 'bed' ? 'Sleep' : d.interactive === 'switch' ? 'Toggle switch' : `Use ${d.name}`,
-        x: b.p[1], z: b.p[3], y: b.p[2], radius: Math.max(2.8, d.size[0] * 0.8), kind: 'part', arg: String(b.id),
+        id: 'part:' + b.id,
+        label:
+          d.interactive === 'door'
+            ? b.open
+              ? 'Close door'
+              : 'Open door'
+            : d.id === 'bed'
+              ? 'Sleep'
+              : d.interactive === 'switch'
+                ? 'Toggle switch'
+                : `Use ${d.name}`,
+        x: b.p[1],
+        z: b.p[3],
+        y: b.p[2],
+        radius: Math.max(2.8, d.size[0] * 0.8),
+        kind: 'part',
+        arg: String(b.id),
       });
     }
     this.sim.hub.extra = list;
@@ -689,7 +865,10 @@ export class BuildingSystem implements System {
 
 const clamp = (v: number) => Math.max(0.25, Math.min(4, v));
 const round = (v: number) => Math.round(v * 1000) / 1000;
-function quatMul(a: { x: number; y: number; z: number; w: number }, b: { x: number; y: number; z: number; w: number }) {
+function quatMul(
+  a: { x: number; y: number; z: number; w: number },
+  b: { x: number; y: number; z: number; w: number },
+) {
   return {
     x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
     y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,

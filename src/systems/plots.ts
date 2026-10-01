@@ -4,6 +4,7 @@ import { emptyPlot, type PlotState } from '../save/schema';
 import type { PlotDef } from '../data/types';
 import { CONFIG } from '../config';
 import { Terrain } from '../world/terrain';
+import { FLAT_ZONES } from '../world/layout';
 import type { Streamer } from './streaming';
 
 export interface Rect {
@@ -17,7 +18,10 @@ export const SECTION_GROW = 12;
 /** Plot ownership, expansion and spatial queries. */
 export class PlotSystem implements System {
   readonly name = 'plots';
-  constructor(private sim: Sim, streamer: Streamer) {
+  constructor(
+    private sim: Sim,
+    streamer: Streamer,
+  ) {
     streamer.blocked = (x, z) => this.nearAny(x, z, 6);
   }
   update(): void {}
@@ -31,11 +35,18 @@ export class PlotSystem implements System {
 
   rect(def: PlotDef, sections = this.sim.state.plots[def.id]?.sections ?? 1): Rect {
     const g = (sections - 1) * SECTION_GROW;
-    return { x0: def.center[0] - def.size[0] / 2 - g, x1: def.center[0] + def.size[0] / 2 + g, z0: def.center[1] - def.size[1] / 2 - g, z1: def.center[1] + def.size[1] / 2 + g };
+    return {
+      x0: def.center[0] - def.size[0] / 2 - g,
+      x1: def.center[0] + def.size[0] / 2 + g,
+      z0: def.center[1] - def.size[1] / 2 - g,
+      z1: def.center[1] + def.size[1] / 2 + g,
+    };
   }
 
   /** Maximum footprint a plot could ever occupy (used for tree exclusion). */
   private nearAny(x: number, z: number, margin: number): boolean {
+    for (const zn of FLAT_ZONES)
+      if (Math.abs(x - zn.x) < zn.hx + margin + 6 && Math.abs(z - zn.z) < zn.hz + margin + 6) return true;
     for (const p of PLOTS) {
       const hx = p.size[0] / 2 + Terrain.PLOT_GROW * 0.5 + margin + (p.maxSections - 1) * SECTION_GROW * 0.5;
       const hz = p.size[1] / 2 + Terrain.PLOT_GROW * 0.5 + margin + (p.maxSections - 1) * SECTION_GROW * 0.5;

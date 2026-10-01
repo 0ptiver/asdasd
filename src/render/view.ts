@@ -10,6 +10,8 @@ import { HubRender } from './hubRender';
 import { Human, makeAxeModel } from './models';
 import { LogRenderer } from './logRender';
 import { BuildRender } from './buildRender';
+import { VehicleRenderer } from './vehicleRender';
+import { isNight } from '../core/gameTime';
 import { Fx } from './fx';
 import { AXE_BY_ID, SKINS } from '../data/axes';
 import { NPCS } from '../data/npcs';
@@ -31,6 +33,7 @@ export class View {
   private treeR: TreeRenderer | null = null;
   private logR: LogRenderer | null = null;
   private buildR: BuildRender | null = null;
+  private vehR: VehicleRenderer | null = null;
   private fx = new Fx();
   private heldKey = '';
   private hubR: HubRender | null = null;
@@ -107,6 +110,8 @@ export class View {
     this.unsub.push(sim.bus.on('fx', (e) => this.fx.emit(e.kind, e.x, e.y, e.z, e.n ?? 8, e.color)));
     this.buildR = new BuildRender(sim);
     this.world.add(this.buildR.group);
+    this.vehR = new VehicleRenderer(sim);
+    this.world.add(this.vehR.group);
     this.hubR = new HubRender(sim.hub.layout);
     this.world.add(this.hubR.group);
     this.playerModel = new Human({ shirt: 0xc0392b, pants: 0x3a4a6a, hat: 0x2a5a3a, beard: true });
@@ -149,6 +154,8 @@ export class View {
       this.world.remove(this.buildR.group);
     }
     this.buildR = null;
+    if (this.vehR) this.world.remove(this.vehR.group);
+    this.vehR = null;
     if (this.playerModel) this.world.remove(this.playerModel.root);
     for (const n of this.npcModels) this.world.remove(n.human.root);
     this.npcModels = [];
@@ -190,7 +197,9 @@ export class View {
     const p = sim.player;
     const st = sim.state;
     // ---- camera
-    const head = new THREE.Vector3(p.x, p.y + 1.7, p.z);
+    const curV = sim.vehicles.current;
+    const headOff = curV ? Math.max(1.8, curV.def.size[1] * 0.7 + 1.2) : 1.7;
+    const head = new THREE.Vector3(p.x, p.y + headOff, p.z);
     const cp = Math.cos(p.camPitch);
     const sp = Math.sin(p.camPitch);
     const fwd = new THREE.Vector3(-Math.sin(p.camYaw) * cp, -sp, -Math.cos(p.camYaw) * cp);
@@ -210,6 +219,12 @@ export class View {
     }
     this.shake = Math.max(0, this.shake - dt * 2.5);
     this.camera.lookAt(head.x + Math.cos(p.camYaw) * 0.5, head.y - 0.1, head.z - Math.sin(p.camYaw) * 0.5);
+
+    const dbg = (window as any).__cam;
+    if (dbg) {
+      this.camera.position.set(dbg.pos[0], dbg.pos[1], dbg.pos[2]);
+      this.camera.lookAt(dbg.at[0], dbg.at[1], dbg.at[2]);
+    }
 
     // ---- environment
     if (this.envTick++ % 3 === 0 || true) {
@@ -253,6 +268,12 @@ export class View {
     this.hubR?.update(this.time, sim.sawmill.sawing);
     this.logR?.update();
     this.buildR?.update(dt);
+    this.vehR?.update(
+      dt,
+      (k, x, y, z, n, c) => this.fx.emit(k, x, y, z, n, c),
+      this.playerModel,
+      isNight(st.time),
+    );
     this.fx.setScale(this.renderer.domElement.height);
     this.fx.update(dt);
     // held axe
