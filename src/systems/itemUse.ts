@@ -56,7 +56,7 @@ export class ItemUseSystem implements System {
         return s.treasure?.useMap() ?? false;
     }
     if (def.category === 'pet') {
-      s.state.pets.includes(id) || s.state.pets.push(id);
+      if (!s.state.pets.includes(id)) s.state.pets.push(id);
       s.state.activePet = id;
       s.inventory.remove(id);
       s.bus.emit('notify', { text: `${def.name} is now your companion`, kind: 'good' });

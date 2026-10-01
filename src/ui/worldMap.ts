@@ -93,7 +93,8 @@ export class WorldMap {
     this.ctx.lineWidth = Math.max(1, (RIVER_WIDTH / W) * SIZE * 1.5);
     this.ctx.beginPath();
     for (let z = -W / 2; z <= W / 2; z += 30)
-      z === -W / 2 ? this.ctx.moveTo(px(riverX(z)), px(z)) : this.ctx.lineTo(px(riverX(z)), px(z));
+      if (z === -W / 2) this.ctx.moveTo(px(riverX(z)), px(z));
+      else this.ctx.lineTo(px(riverX(z)), px(z));
     this.ctx.stroke();
     this.progress = 1;
   }

@@ -380,7 +380,7 @@ export class VehicleSystem implements System {
     const side = v.def.size[0] / 2 + 1.4;
     const q = v.body.rotation();
     const yaw = 2 * Math.atan2(q.y, q.w);
-    let ex = t.x + Math.cos(yaw) * side,
+    const ex = t.x + Math.cos(yaw) * side,
       ez = t.z - Math.sin(yaw) * side;
     let ey = this.sim.streamer.terrain.surfaceAt(ex, ez, t.y + 3);
     if (v.control === 'boat' || v.control === 'hover') ey = Math.max(ey, t.y - 0.5);

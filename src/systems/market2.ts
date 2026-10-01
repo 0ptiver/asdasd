@@ -66,7 +66,7 @@ export class ExchangeSystem implements System {
     for (let i = 0; i < stock; i++) {
       const roll = rng.float();
       let item: string;
-      let n = 1;
+      let n: number;
       if (roll < 0.5) {
         const w = rng.pick(WOODS.filter((x) => !x.guardianOnly && x.weight > 0 && x.baseValue < 400));
         item = 'plank_' + w.id;

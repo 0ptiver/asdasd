@@ -43,6 +43,7 @@ export function cleanChat(s: unknown): string | null {
   if (typeof s !== 'string') return null;
   // strip control chars & markup, collapse whitespace
   const t = s
+    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001f\u007f<>]/g, '')
     .replace(/\s+/g, ' ')
     .trim()

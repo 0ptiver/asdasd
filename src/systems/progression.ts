@@ -105,7 +105,6 @@ export class PrestigeSystem implements System {
     for (const plot of Object.values(st.plots)) {
       // businesses reset, parts remain
       plot.businesses = {};
-      plot.chests = plot.chests;
     }
     sim.bus.emit('prestige', { level: st.prestige.level });
     sim.bus.emit('notify', {

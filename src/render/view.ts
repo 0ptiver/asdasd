@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import type { Game } from '../core/game';
 import type { Sim } from '../core/sim';
 import { Environment } from './environment';
@@ -52,7 +57,12 @@ export class View {
   private camPos = new THREE.Vector3();
   private shake = 0;
   private unsub: (() => void)[] = [];
-  private envTick = 0;
+  private composer: EffectComposer | null = null;
+  private composerKey = '';
+  private bloom: UnrealBloomPass | null = null;
+  get indoor(): number {
+    return this.env.indoor;
+  }
 
   constructor(
     readonly game: Game,
@@ -154,7 +164,6 @@ export class View {
       this.npcModels.push({ human: h, x: n.pos[0], z: n.pos[1], phase: Math.random() * 6 });
     }
     this.unsub.push(sim.bus.on('shake', (e) => (this.shake = Math.max(this.shake, e.amount))));
-    this.envTick = 0;
   }
 
   detach(): void {
@@ -207,12 +216,53 @@ export class View {
     this.camera.updateProjectionMatrix();
     this.resize();
   }
+  /** (Re)build the post-processing chain when bloom/SSAO settings change. */
+  private ensureComposer(): EffectComposer | null {
+    const st = this.game.settings;
+    const key = `${st.bloom}:${st.ssao}`;
+    if (!st.bloom && !st.ssao) {
+      this.composer = null;
+      this.composerKey = '';
+      return null;
+    }
+    if (this.composer && this.composerKey === key) return this.composer;
+    try {
+      const w = window.innerWidth, h = window.innerHeight;
+      const c = new EffectComposer(this.renderer);
+      c.setSize(w, h);
+      c.addPass(new RenderPass(this.scene, this.camera));
+      if (st.ssao) {
+        const sao = new SAOPass(this.scene, this.camera);
+        sao.params.saoBias = 0.5;
+        sao.params.saoIntensity = 0.012;
+        sao.params.saoScale = 8;
+        sao.params.saoKernelRadius = 24;
+        c.addPass(sao);
+      }
+      if (st.bloom) {
+        this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.45, 0.6, 0.88);
+        c.addPass(this.bloom);
+      }
+      c.addPass(new OutputPass());
+      this.composer = c;
+      this.composerKey = key;
+      return c;
+    } catch (e) {
+      console.warn('post-processing unavailable', e);
+      this.game.settings.bloom = false;
+      this.game.settings.ssao = false;
+      this.composer = null;
+      return null;
+    }
+  }
+
   resize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
+    this.composer?.setSize(w, h);
   }
 
   render(_alpha: number, dt: number): void {
@@ -256,7 +306,7 @@ export class View {
     }
 
     // ---- environment
-    if (this.envTick++ % 3 === 0 || true) {
+    {
       const blend = sim.streamer.terrain.biomeBlend(p.x, p.z);
       this.env.update(
         dt,
@@ -324,7 +374,9 @@ export class View {
       } else this.playerModel.setHeld(null);
     }
     this.treeR?.update(dt, p.x, p.z);
-    this.renderer.render(this.scene, this.camera);
+    const comp = this.ensureComposer();
+    if (comp) comp.render(dt);
+    else this.renderer.render(this.scene, this.camera);
   }
 }
 

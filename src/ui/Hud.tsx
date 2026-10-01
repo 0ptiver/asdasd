@@ -242,6 +242,13 @@ export function Hud() {
           }
         </div>
       )}
+      {sim.tutorial.active && !game.panel && (
+        <div class="hud-chip" style="position:fixed;left:50%;top:84px;transform:translateX(-50%);max-width:min(560px,92vw);pointer-events:auto;border-color:var(--amber)" data-testid="tutorial">
+          <div style="font-size:0.7rem;color:var(--amber-2)">TUTORIAL {Math.min(sim.tutorial.step + 1, 6)}/6</div>
+          <div style="font-size:0.88rem;font-weight:600">{sim.tutorial.text}</div>
+          <button class="btn alt small clickable" style="margin-top:4px" onClick={() => sim.tutorial.skip()}>Skip tutorial</button>
+        </div>
+      )}
       <Toasts />
       <TouchControls />
       <div class="hud-br">

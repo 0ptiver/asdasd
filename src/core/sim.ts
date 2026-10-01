@@ -33,6 +33,7 @@ import type { WorkerSystem } from '../systems/workers';
 import type { BusinessSystem } from '../systems/businesses';
 import type { NodeSystem } from '../systems/nodes';
 import type { LogicSystem } from '../systems/logic';
+import type { TutorialSystem } from '../systems/tutorial';
 import type { BossSystem } from '../systems/bosses';
 import type { AchievementSystem, PrestigeSystem, EventSystem, PetSystem } from '../systems/progression';
 
@@ -85,6 +86,7 @@ export class Sim {
   businesses!: BusinessSystem;
   nodes!: NodeSystem;
   logic!: LogicSystem;
+  tutorial!: TutorialSystem;
   bosses!: BossSystem;
   achievements!: AchievementSystem;
   prestige!: PrestigeSystem;

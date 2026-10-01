@@ -311,7 +311,10 @@ export class Hub {
     const a = c.acct!;
     const t = this.now();
     for (const [id, tr] of this.trades)
-      if (tr.expires < t) (this.endTrade(tr, 'timeout'), this.trades.delete(id));
+      if (tr.expires < t) {
+        this.endTrade(tr, 'timeout');
+        this.trades.delete(id);
+      }
     switch (m.op) {
       case 'request': {
         const other = m.who ? this.connOf(m.who) : undefined;

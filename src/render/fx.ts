@@ -209,7 +209,7 @@ export class Fx {
   update(dt: number): void {
     let w = 0;
     for (let i = 0; i < this.n; i++) {
-      let l = this.life[i]! - dt;
+      const l = this.life[i]! - dt;
       if (l <= 0) continue;
       this.life[i] = l;
       const d = 1 - Math.min(1, this.drag[i]! * dt);
@@ -233,7 +233,6 @@ export class Fx {
       }
       if (this.fade[w]) this.col[w * 4 + 3] = Math.min(1, (l / this.maxLife[w]!) * 1.6);
       w++;
-      l = 0;
     }
     this.n = w;
     const g = this.points.geometry;

@@ -315,7 +315,6 @@ export class BuildingSystem implements System {
       const r = this.place(op.plot, [...op.p] as PlacedPart, { record: false });
       if (typeof r === 'string') this.sim.bus.emit('notify', { text: 'Cannot undo: ' + r, kind: 'bad' });
       else op.p = [...op.p] as PlacedPart;
-      if (typeof r !== 'string') this.undoStack.length && void 0;
     } else {
       const b = this.built.get(op.id);
       if (b)
@@ -719,7 +718,6 @@ export class BuildingSystem implements System {
 
   private currentPart(): PlacedPart {
     const g = this.ghost;
-    const def = PART_BY_ID[this.kind]!;
     return [
       this.kind,
       g.x,
@@ -731,9 +729,8 @@ export class BuildingSystem implements System {
       this.scale[2],
       this.color,
       woodIndex(this.wood),
-      this.kind === 'sign' ? undefined : undefined,
+      undefined,
     ] as PlacedPart;
-    void def;
   }
 
   update(dt: number): void {

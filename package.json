@@ -1,6 +1,6 @@
 {
   "name": "timber-empire",
-  "version": "0.1.0",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,10 +9,13 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "format": "prettier --write src",
+    "format": "prettier --write src tests e2e scripts",
     "test": "vitest run",
     "validate": "tsx scripts/validate-data.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "server": "tsx src/net/server/index.ts",
+    "economy": "tsx scripts/economy.ts --write",
+    "test:all": "npm run validate && npm run typecheck && npm test"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.21.0",

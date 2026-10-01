@@ -7,6 +7,8 @@ import { newGameState, type GameState, type Settings } from '../save/schema';
 import type { Sim } from './sim';
 import type { View } from '../render/view';
 import { Sfx } from '../audio/sfx';
+import { MusicManager } from '../audio/music';
+import { daylight } from './gameTime';
 import type { Interactable } from '../systems/hubSystem';
 import { WorldMap } from '../ui/worldMap';
 import { NetClient } from '../net/client';
@@ -25,6 +27,7 @@ export class Game {
   state: GameState | null = null;
   readonly sfx = new Sfx();
   readonly net = new NetClient(this);
+  readonly music = new MusicManager(this.sfx);
   panel: { name: string; arg?: string } | null = null;
   slot = -1;
   screen: Screen = 'loading';
@@ -318,6 +321,14 @@ export class Game {
   }
   private frame(alpha: number, fdt: number): void {
     this.view?.render(alpha, fdt);
+    const sim = this.sim;
+    if (sim && !this.loop.paused) {
+      this.music.update(fdt, {
+        biome: sim.biome.current.id, daylight: daylight(sim.state.time), weather: sim.state.weather.kind,
+        indoor: this.view?.indoor ?? 0, combat: !!sim.bosses.engaged, speed: Math.hypot(sim.player.vx, sim.player.vz) + Math.abs(sim.vehicles.current?.speed ?? 0),
+        musicVol: this.settings.music, ambVol: this.settings.ambience,
+      });
+    }
     this.bump();
   }
 
