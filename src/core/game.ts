@@ -108,10 +108,10 @@ export class Game {
 
   async start(slot: number, state: GameState): Promise<void> {
     this.quit(false);
-    const { Sim } = await import('./sim');
+    const { buildSim } = await import('./boot');
     this.slot = slot;
     this.state = state;
-    this.sim = new Sim(this, state);
+    this.sim = buildSim(this, state);
     await this.sim.init();
     this.view!.attach(this.sim);
     this.setScreen('game');

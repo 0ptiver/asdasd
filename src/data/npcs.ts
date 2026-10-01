@@ -1,4 +1,5 @@
 import type { NpcDef } from './types';
+import { DOCK } from '../world/layout';
 
 export const NPCS: NpcDef[] = [
   {
@@ -82,7 +83,7 @@ export const NPCS: NpcDef[] = [
     id: 'nell',
     name: 'Captain Nell',
     role: 'Harbor Master',
-    pos: [176, 66],
+    pos: [DOCK.x + 3, DOCK.z],
     color: 0x2a7a9a,
     shop: 'harbor',
     lines: [
@@ -119,22 +120,4 @@ export const NPCS: NpcDef[] = [
 ];
 export const NPC_BY_ID: Record<string, NpcDef> = Object.fromEntries(NPCS.map((n) => [n.id, n]));
 
-/** Hub landmark layout (x,z). Everything in the hub is placed from this list. */
-export const HUB = {
-  center: [0, 0] as [number, number],
-  flatRadius: 90,
-  square: [0, 0] as [number, number],
-  toolShop: [-26, -22] as [number, number],
-  landOffice: [26, -22] as [number, number],
-  questBoard: [0, -28] as [number, number],
-  sawmill: [-58, 32] as [number, number],
-  sellCounter: [-24, 38] as [number, number],
-  smithy: [40, 8] as [number, number],
-  garage: [50, 44] as [number, number],
-  gasStation: [70, 20] as [number, number],
-  exchange: [22, 36] as [number, number],
-  dock: [176, 66] as [number, number],
-  spawn: [0, 12] as [number, number],
-  bridge: [190, -40] as [number, number],
-  trainStation: [-80, -50] as [number, number],
-};
+export { HUB } from '../world/layout';

@@ -3,6 +3,11 @@ import type { Game } from './game';
 import type { GameState } from '../save/schema';
 import { advance } from './gameTime';
 import { PhysicsWorld } from '../physics/world';
+import type { Streamer } from '../systems/streaming';
+import type { PlayerSystem } from '../systems/player';
+import type { TreeSystem } from '../systems/trees';
+import type { HubSystem } from '../systems/hubSystem';
+import type { EconomySystem } from '../systems/economy';
 
 export interface System {
   readonly name: string;
@@ -18,6 +23,12 @@ export class Sim {
   readonly physics = new PhysicsWorld();
   readonly systems: System[] = [];
   tickCount = 0;
+  // typed handles to core systems (assigned in boot.ts)
+  streamer!: Streamer;
+  player!: PlayerSystem;
+  trees!: TreeSystem;
+  hub!: HubSystem;
+  econ!: EconomySystem;
   private autosaveAcc = 0;
 
   constructor(
@@ -47,6 +58,12 @@ export class Sim {
       this.autosaveAcc = 0;
       void this.game.save(true);
     }
+  }
+
+  /** Positions that need nearby collision geometry (player, vehicles, ...). */
+  actorPositions(): { x: number; z: number; r: number }[] {
+    const out = [{ x: this.player.x, z: this.player.z, r: 26 }];
+    return out;
   }
 
   beforeSave(): void {

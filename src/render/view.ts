@@ -1,6 +1,16 @@
 import * as THREE from 'three';
 import type { Game } from '../core/game';
 import type { Sim } from '../core/sim';
+import { Environment } from './environment';
+import { Water } from './water';
+import { buildSkyMesh, buildTerrainMesh } from './terrainMesh';
+import type { Chunk } from '../systems/streaming';
+import { TreeRenderer } from './treeRender';
+import { HubRender } from './hubRender';
+import { Human } from './models';
+import { NPCS } from '../data/npcs';
+import { BIOME_BY_ID } from '../data/biomes';
+import { CONFIG } from '../config';
 
 /** Rendering side. Reads the Sim; never mutates game state. */
 export class View {
@@ -9,28 +19,40 @@ export class View {
   readonly camera = new THREE.PerspectiveCamera(70, 1, 0.1, 2500);
   sim: Sim | null = null;
   private idle = new THREE.Group();
+  private world = new THREE.Group();
+  private env!: Environment;
+  private water!: Water;
+  private terrainMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  private chunkMeshes = new Map<string, THREE.Object3D[]>();
+  private treeR: TreeRenderer | null = null;
+  private hubR: HubRender | null = null;
+  private playerModel: Human | null = null;
+  private npcModels: { human: Human; x: number; z: number; phase: number }[] = [];
+  private time = 0;
+  private camPos = new THREE.Vector3();
+  private shake = 0;
+  private unsub: (() => void)[] = [];
+  private envTick = 0;
 
-  constructor(
-    readonly game: Game,
-    readonly canvas: HTMLCanvasElement,
-  ) {
+  constructor(readonly game: Game, readonly canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.scene.background = new THREE.Color(0x9ecbff);
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x446644, 1.1));
-    this.scene.add(this.idle);
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.scene.add(this.idle, this.world);
+    this.env = new Environment(this.scene);
+    this.water = new Water();
+    this.scene.add(this.water.mesh);
+    this.water.mesh.visible = false;
     window.addEventListener('resize', () => this.resize());
     this.resize();
   }
 
   async preload(progress: (p: number) => void): Promise<void> {
-    const logo = new THREE.Mesh(
-      new THREE.BoxGeometry(2, 2, 2),
-      new THREE.MeshStandardMaterial({ color: 0xc0853a }),
-    );
+    const logo = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshStandardMaterial({ color: 0xc0853a }));
     this.idle.add(logo);
+    this.idle.add(new THREE.AmbientLight(0xffffff, 1.2));
     this.camera.position.set(4, 3, 6);
     this.camera.lookAt(0, 0, 0);
     progress(1);
@@ -39,16 +61,76 @@ export class View {
   attach(sim: Sim): void {
     this.sim = sim;
     this.idle.visible = false;
+    this.water.mesh.visible = true;
+    this.applyQuality();
+    const st = sim.streamer;
+    const addChunk = (c: Chunk) => {
+      const objs: THREE.Object3D[] = [];
+      const m = buildTerrainMesh(c, st.terrain, this.terrainMat);
+      this.world.add(m);
+      objs.push(m);
+      const sky = buildSkyMesh(c, this.terrainMat);
+      if (sky) {
+        this.world.add(sky);
+        objs.push(sky);
+      }
+      this.chunkMeshes.set(c.key, objs);
+    };
+    const removeChunk = (c: Chunk) => {
+      for (const o of this.chunkMeshes.get(c.key) ?? []) {
+        this.world.remove(o);
+        (o as THREE.Mesh).geometry.dispose();
+      }
+      this.chunkMeshes.delete(c.key);
+    };
+    for (const c of st.loaded.values()) addChunk(c);
+    st.onLoad.push(addChunk);
+    st.onUnload.push(removeChunk);
+    this.treeR = new TreeRenderer(sim.trees);
+    this.world.add(this.treeR.group);
+    this.hubR = new HubRender(sim.hub.layout);
+    this.world.add(this.hubR.group);
+    this.playerModel = new Human({ shirt: 0xc0392b, pants: 0x3a4a6a, hat: 0x2a5a3a, beard: true });
+    this.world.add(this.playerModel.root);
+    for (const n of NPCS) {
+      const h = new Human({ shirt: n.color, pants: 0x4a3a2a, hat: n.id === 'gus' || n.id === 'brokk' ? 0x6a4a2a : null, hair: 0x3a2a1a, beard: n.id === 'gus' || n.id === 'brokk' || n.id === 'nell', apron: n.id === 'brokk' || n.id === 'gus' ? 0x6a5a4a : null });
+      const y = st.terrain.heightAt(n.pos[0], n.pos[1]);
+      h.root.position.set(n.pos[0], y, n.pos[1]);
+      h.root.rotation.y = Math.atan2(-n.pos[0], 14 - n.pos[1]);
+      this.world.add(h.root);
+      this.npcModels.push({ human: h, x: n.pos[0], z: n.pos[1], phase: Math.random() * 6 });
+    }
+    this.unsub.push(sim.bus.on('shake', (e) => (this.shake = Math.max(this.shake, e.amount))));
+    this.envTick = 0;
   }
+
   detach(): void {
+    for (const u of this.unsub) u();
+    this.unsub = [];
     this.sim = null;
     this.idle.visible = true;
+    this.water.mesh.visible = false;
+    for (const objs of this.chunkMeshes.values()) for (const o of objs) {
+      this.world.remove(o);
+      (o as THREE.Mesh).geometry.dispose();
+    }
+    this.chunkMeshes.clear();
+    if (this.treeR) this.world.remove(this.treeR.group);
+    if (this.hubR) this.world.remove(this.hubR.group);
+    if (this.playerModel) this.world.remove(this.playerModel.root);
+    for (const n of this.npcModels) this.world.remove(n.human.root);
+    this.npcModels = [];
+    this.treeR = this.hubR = this.playerModel = null;
   }
+
   applyQuality(): void {
     const q = this.game.settings.quality;
     const pr = q === 'low' ? 0.75 : q === 'medium' ? 1 : q === 'high' ? 1.5 : 2;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, pr));
     this.renderer.shadowMap.enabled = this.game.settings.shadows && q !== 'low';
+    this.env.setShadows(this.game.settings.shadows && q !== 'low', q === 'ultra' ? 4096 : q === 'high' ? 2048 : 1024);
+    this.camera.fov = this.game.settings.fov;
+    this.camera.updateProjectionMatrix();
     this.resize();
   }
   resize(): void {
@@ -58,8 +140,61 @@ export class View {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }
+
   render(_alpha: number, dt: number): void {
-    if (!this.sim) this.idle.rotation.y += dt * 0.6;
+    this.time += dt;
+    const sim = this.sim;
+    if (!sim) {
+      this.idle.rotation.y += dt * 0.6;
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
+    const p = sim.player;
+    const st = sim.state;
+    // ---- camera
+    const head = new THREE.Vector3(p.x, p.y + 1.7, p.z);
+    const cp = Math.cos(p.camPitch);
+    const sp = Math.sin(p.camPitch);
+    const fwd = new THREE.Vector3(-Math.sin(p.camYaw) * cp, -sp, -Math.cos(p.camYaw) * cp);
+    const dist = p.camDist;
+    const wantPos = head.clone().addScaledVector(fwd, -dist).add(new THREE.Vector3(Math.cos(p.camYaw) * 0.5, 0.3, -Math.sin(p.camYaw) * 0.5));
+    const gh = sim.streamer.terrain.surfaceAt(wantPos.x, wantPos.z, p.y) + 0.7;
+    if (wantPos.y < gh) wantPos.y = gh;
+    this.camPos.lerp(wantPos, 1 - Math.exp(-dt * 25));
+    if (this.camPos.distanceTo(wantPos) > 30) this.camPos.copy(wantPos);
+    this.camera.position.copy(this.camPos);
+    if (this.shake > 0 && !this.game.settings.reducedMotion) {
+      this.camera.position.x += (Math.random() - 0.5) * this.shake * 0.5;
+      this.camera.position.y += (Math.random() - 0.5) * this.shake * 0.5;
+    }
+    this.shake = Math.max(0, this.shake - dt * 2.5);
+    this.camera.lookAt(head.x + Math.cos(p.camYaw) * 0.5, head.y - 0.1, head.z - Math.sin(p.camYaw) * 0.5);
+
+    // ---- environment
+    if (this.envTick++ % 3 === 0 || true) {
+      const blend = sim.streamer.terrain.biomeBlend(p.x, p.z);
+      this.env.update(dt, blend, st.time, new THREE.Vector3(p.x, p.y, p.z), !!st.gear.head && st.gear.head === 'headlamp', st.weather.kind, this.camera.position.y);
+      const b = blend.main;
+      this.water.update(this.time, this.camera.position, b.id === 'swamp' ? 0x4a6a3a : b.id === 'tropics' ? 0x20b8d0 : b.id === 'volcano' ? 0x3a2a28 : 0x2a7ab8, this.env.daylight);
+    }
+
+    // ---- models
+    if (this.playerModel) {
+      const m = this.playerModel;
+      m.root.position.set(p.x, p.y, p.z);
+      m.root.rotation.y = p.yaw;
+      m.animate(dt, p.moveSpeed, p.swing >= 0 ? p.swing : -1, false, p.swimming);
+    }
+    for (const n of this.npcModels) {
+      n.phase += dt;
+      n.human.armR.rotation.x = Math.sin(n.phase * 1.2) * 0.06;
+      n.human.head.rotation.y = Math.sin(n.phase * 0.5) * 0.4;
+    }
+    this.hubR?.update(this.time, false);
+    this.treeR?.update(dt, p.x, p.z);
     this.renderer.render(this.scene, this.camera);
   }
 }
+
+void BIOME_BY_ID;
+void CONFIG;
