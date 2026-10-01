@@ -39,7 +39,10 @@ export class PlayerSystem implements System {
   extraSpeed = 1; // multiplier hooks (hazards, buffs)
   buffs: Record<string, number> = {};
 
-  constructor(private sim: Sim, private streamer: Streamer) {}
+  constructor(
+    private sim: Sim,
+    private streamer: Streamer,
+  ) {}
 
   get pos() {
     return { x: this.x, y: this.y, z: this.z };
@@ -55,7 +58,9 @@ export class PlayerSystem implements System {
     const g = this.streamer.terrain.surfaceAt(this.x, this.z, s.y);
     this.y = Math.max(s.y, g + 0.2);
     const w = this.sim.physics.world;
-    this.body = w.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(this.x, this.y + P.height / 2, this.z));
+    this.body = w.createRigidBody(
+      RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(this.x, this.y + P.height / 2, this.z),
+    );
     this.collider = w.createCollider(
       RAPIER.ColliderDesc.capsule(HALF, P.radius).setCollisionGroups((G_PLAYER << 16) | PLAYER_FILTER),
       this.body,
@@ -94,13 +99,19 @@ export class PlayerSystem implements System {
     const fx = -Math.sin(this.camYaw) * cp;
     const fy = -sp;
     const fz = -Math.cos(this.camYaw) * cp;
-    const hx = this.x, hy = this.y + 1.7, hz = this.z;
+    const hx = this.x,
+      hy = this.y + 1.7,
+      hz = this.z;
     const ox = hx - fx * this.camDist + Math.cos(this.camYaw) * 0.5;
     const oy = hy - fy * this.camDist + 0.3;
     const oz = hz - fz * this.camDist - Math.sin(this.camYaw) * 0.5;
     // aim at a point far along the look direction from the head so the ray passes through the crosshair target
-    const tx = hx + Math.cos(this.camYaw) * 0.5 + fx * 40, ty = hy - 0.1 + fy * 40, tz = hz - Math.sin(this.camYaw) * 0.5 + fz * 40;
-    const dx = tx - ox, dy = ty - oy, dz = tz - oz;
+    const tx = hx + Math.cos(this.camYaw) * 0.5 + fx * 40,
+      ty = hy - 0.1 + fy * 40,
+      tz = hz - Math.sin(this.camYaw) * 0.5 + fz * 40;
+    const dx = tx - ox,
+      dy = ty - oy,
+      dz = tz - oz;
     const l = Math.hypot(dx, dy, dz);
     return { ox, oy, oz, dx: dx / l, dy: dy / l, dz: dz / l };
   }
@@ -115,7 +126,7 @@ export class PlayerSystem implements System {
   strength(): number {
     const st = this.sim.state;
     let s: number = CONFIG.player.baseStrength + Math.sqrt(st.skills.strength) * 1.2;
-    const gl = st.gear.gloves ? ITEM_BY_ID[st.gear.gloves]?.buff?.strength ?? 0 : 0;
+    const gl = st.gear.gloves ? (ITEM_BY_ID[st.gear.gloves]?.buff?.strength ?? 0) : 0;
     s += gl + (this.buffs.strength ?? 0);
     if (st.activePet === 'pet_ox') s += 10;
     s *= 1 + st.prestige.level * 0.05;
@@ -125,7 +136,7 @@ export class PlayerSystem implements System {
   speedMultiplier(): number {
     const st = this.sim.state;
     let m = this.extraSpeed;
-    const boots = st.gear.boots ? ITEM_BY_ID[st.gear.boots]?.buff?.speed ?? 0 : 0;
+    const boots = st.gear.boots ? (ITEM_BY_ID[st.gear.boots]?.buff?.speed ?? 0) : 0;
     m *= 1 + boots;
     return m;
   }
@@ -204,12 +215,18 @@ export class PlayerSystem implements System {
       this.vy -= P.gravity * dt;
       const jumpHeld = !lock && (inp.pressed('jump') || inp.held('jump'));
       if (this.grounded && jumpHeld) {
-        const jb = st.gear.boots ? ITEM_BY_ID[st.gear.boots]?.buff?.jump ?? 0 : 0;
+        const jb = st.gear.boots ? (ITEM_BY_ID[st.gear.boots]?.buff?.jump ?? 0) : 0;
         this.vy = P.jumpSpeed * (1 + jb);
         this.grounded = false;
       }
       // jetpack
-      if (!lock && inp.held('jump') && !this.grounded && st.gear.backpack === 'jetpack' && st.player.fuel > 0) {
+      if (
+        !lock &&
+        inp.held('jump') &&
+        !this.grounded &&
+        st.gear.backpack === 'jetpack' &&
+        st.player.fuel > 0
+      ) {
         this.vy = Math.min(this.vy + 40 * dt, 9);
         st.player.fuel -= 12 * dt;
       }

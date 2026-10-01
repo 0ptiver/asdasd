@@ -41,14 +41,20 @@ export class HubRender {
     mesh.receiveShadow = true;
     this.group.add(mesh);
     for (const s of layout.signs) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(s.w, s.h), new THREE.MeshBasicMaterial({ map: signTexture(s), side: THREE.DoubleSide }));
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(s.w, s.h),
+        new THREE.MeshBasicMaterial({ map: signTexture(s), side: THREE.DoubleSide }),
+      );
       m.position.set(s.x, s.y, s.z);
       m.rotation.y = s.ry;
       this.group.add(m);
     }
     // animated saw blade next to the conveyor
     const intake = layout.sawIntake;
-    const blade = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 0.1, 24), new THREE.MeshLambertMaterial({ color: 0xdfe6ee, flatShading: true }));
+    const blade = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.25, 1.25, 0.1, 24),
+      new THREE.MeshLambertMaterial({ color: 0xdfe6ee, flatShading: true }),
+    );
     blade.rotation.z = Math.PI / 2;
     blade.position.set(intake.x + 12.6 + 0.1, intake.y + 0.2, intake.z);
     blade.rotation.x = 0;
@@ -70,11 +76,21 @@ export class HubRender {
 
   private addPart(p: Prims, d: PartDesc): void {
     switch (d.t) {
-      case 'box': p.box(d.w, d.h, d.d, d.x, d.y, d.z, d.c, [d.rx ?? 0, d.ry ?? 0, d.rz ?? 0]); break;
-      case 'cyl': p.cyl(d.rt, d.rb, d.h, d.seg ?? 10, d.x, d.y, d.z, d.c); break;
-      case 'cone': p.cone(d.r, d.h, d.seg ?? 8, d.x, d.y, d.z, d.c); break;
-      case 'pyr': p.pyramid(d.w, d.h, d.d, d.x, d.y, d.z, d.c); break;
-      case 'sphere': p.sphere(d.r, d.x, d.y, d.z, d.c, undefined, 1); break;
+      case 'box':
+        p.box(d.w, d.h, d.d, d.x, d.y, d.z, d.c, [d.rx ?? 0, d.ry ?? 0, d.rz ?? 0]);
+        break;
+      case 'cyl':
+        p.cyl(d.rt, d.rb, d.h, d.seg ?? 10, d.x, d.y, d.z, d.c);
+        break;
+      case 'cone':
+        p.cone(d.r, d.h, d.seg ?? 8, d.x, d.y, d.z, d.c);
+        break;
+      case 'pyr':
+        p.pyramid(d.w, d.h, d.d, d.x, d.y, d.z, d.c);
+        break;
+      case 'sphere':
+        p.sphere(d.r, d.x, d.y, d.z, d.c, undefined, 1);
+        break;
     }
   }
 

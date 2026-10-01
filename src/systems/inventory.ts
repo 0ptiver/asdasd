@@ -94,7 +94,15 @@ export class InventorySystem implements System {
   giveAxe(defId: string): AxeInst | null {
     const def = AXE_BY_ID[defId];
     if (!def) return null;
-    const a: AxeInst = { uid: this.newUid('a'), def: defId, up: 0, ench: {}, dur: def.durability, skin: 'default', xp: 0 };
+    const a: AxeInst = {
+      uid: this.newUid('a'),
+      def: defId,
+      up: 0,
+      ench: {},
+      dur: def.durability,
+      skin: 'default',
+      xp: 0,
+    };
     this.sim.state.axes.push(a);
     // put in first free hotbar slot
     const hb = this.inv.hotbar;

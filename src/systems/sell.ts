@@ -17,7 +17,8 @@ export class SellSystem implements System {
         continue;
       }
       const t = l.body.translation();
-      const inside = Math.abs(t.x - z.x) < z.hx && Math.abs(t.z - z.z) < z.hz && t.y > z.y - 2.5 && t.y < z.y + z.hy + 2;
+      const inside =
+        Math.abs(t.x - z.x) < z.hx && Math.abs(t.z - z.z) < z.hz && t.y > z.y - 2.5 && t.y < z.y + z.hy + 2;
       if (!inside) {
         this.inZone.delete(l.id);
         continue;
@@ -52,7 +53,13 @@ export class SellSystem implements System {
     sim.state.stats.logUnits = (sim.state.stats.logUnits ?? 0) + l.units;
     sim.logs.removeLog(id);
     sim.bus.emit('log:sold', { wood: l.wood, value, units: l.units });
-    sim.bus.emit('fx', { kind: 'coins', x: t.x, y: t.y + 1, z: t.z, n: Math.min(12, 3 + Math.floor(Math.log10(value + 1) * 2)) });
+    sim.bus.emit('fx', {
+      kind: 'coins',
+      x: t.x,
+      y: t.y + 1,
+      z: t.z,
+      n: Math.min(12, 3 + Math.floor(Math.log10(value + 1) * 2)),
+    });
     sim.bus.emit('sfx', { name: 'coin', x: t.x, y: t.y, z: t.z });
     sim.bus.emit('notify', { text: `Sold ${w.name} log  +$${value.toLocaleString()}`, kind: 'money' });
     return value;
@@ -78,7 +85,10 @@ export class SellSystem implements System {
     } else if (cat) sim.market.recordSale(id, n * 0.3);
     sim.bus.emit('item:sell', { item: id, count: n, value: total });
     sim.bus.emit('sfx', { name: 'coin' });
-    sim.bus.emit('notify', { text: `Sold ${n}× ${itemName(id)}  +$${total.toLocaleString()}`, kind: 'money' });
+    sim.bus.emit('notify', {
+      text: `Sold ${n}× ${itemName(id)}  +$${total.toLocaleString()}`,
+      kind: 'money',
+    });
     return total;
   }
 }

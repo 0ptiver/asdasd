@@ -10,4 +10,11 @@ export const SKILLS: { id: SkillId; name: string; perk: string; icon: string }[]
   { id: 'crafting', name: 'Crafting', perk: 'Unlocks recipes, +1% bonus output chance', icon: '🔨' },
   { id: 'foraging', name: 'Foraging', perk: 'Better fishing, foraging and digging luck', icon: '🌿' },
 ];
-export const SKILL_PERKS: Record<number, string> = { 5: 'Novice', 10: 'Apprentice', 20: 'Journeyman', 35: 'Expert', 50: 'Master', 75: 'Grandmaster' };
+export const SKILL_PERKS: Record<number, string> = {
+  5: 'Novice',
+  10: 'Apprentice',
+  20: 'Journeyman',
+  35: 'Expert',
+  50: 'Master',
+  75: 'Grandmaster',
+};

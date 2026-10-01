@@ -50,8 +50,10 @@ export function buildTerrainMesh(chunk: Chunk, terrain: Terrain, material: THREE
         tmp.b += c.b * w.w;
       }
       // slope → rock
-      const hx = chunk.heights[Math.min(N, ix + 1) * stride + iz]! - chunk.heights[Math.max(0, ix - 1) * stride + iz]!;
-      const hz = chunk.heights[ix * stride + Math.min(N, iz + 1)]! - chunk.heights[ix * stride + Math.max(0, iz - 1)]!;
+      const hx =
+        chunk.heights[Math.min(N, ix + 1) * stride + iz]! - chunk.heights[Math.max(0, ix - 1) * stride + iz]!;
+      const hz =
+        chunk.heights[ix * stride + Math.min(N, iz + 1)]! - chunk.heights[ix * stride + Math.max(0, iz - 1)]!;
       const slope = Math.hypot(hx, hz) / (2 * step);
       const main = blend.main;
       if (slope > 0.75 && main.id !== 'taiga') tmp.lerp(ROCK, Math.min(0.85, (slope - 0.75) * 2));

@@ -58,7 +58,9 @@ export const treeKey = (cx: number, cz: number) => `${cx},${cz}`;
 const MYTHIC_CHANCE = 1 / 20000;
 
 function pickWood(biome: BiomeDef, r: number): WoodDef | null {
-  const list = [...new Set(biome.woods)].map((id) => WOOD_BY_ID[id]!).filter((w) => w && !w.guardianOnly && w.weight > 0);
+  const list = [...new Set(biome.woods)]
+    .map((id) => WOOD_BY_ID[id]!)
+    .filter((w) => w && !w.guardianOnly && w.weight > 0);
   if (!list.length) return null;
   let total = 0;
   for (const w of list) total += w.weight;
@@ -71,7 +73,12 @@ function pickWood(biome: BiomeDef, r: number): WoodDef | null {
 }
 
 /** Places trees for one chunk. `blocked(x,z)` lets plots / structures exclude areas. */
-export function generateChunkTrees(terrain: Terrain, cx: number, cz: number, blocked?: (x: number, z: number) => boolean): Tree[] {
+export function generateChunkTrees(
+  terrain: Terrain,
+  cx: number,
+  cz: number,
+  blocked?: (x: number, z: number) => boolean,
+): Tree[] {
   const S = CONFIG.chunkSize;
   const cell = 8;
   const n = S / cell;
@@ -99,7 +106,8 @@ export function generateChunkTrees(terrain: Terrain, cx: number, cz: number, blo
       const edgeFade = Math.min(1, Math.max(0, 1.7 - blend.score));
       const dens = (biome.density / 100) * cell * cell * 0.62 * edgeFade;
       if (h0 > dens) continue;
-      if (Math.hypot(x - HUB.center[0], z - HUB.center[1]) < HUB.flatRadius * 0.95 && biome.id === 'meadow') continue;
+      if (Math.hypot(x - HUB.center[0], z - HUB.center[1]) < HUB.flatRadius * 0.95 && biome.id === 'meadow')
+        continue;
       if (roadDist(x, z) < ROAD_HALF + 3.5) continue;
       if (riverDist(x, z) < RIVER_WIDTH * 1.6) continue;
       let y: number;
@@ -132,7 +140,14 @@ export function generateChunkTrees(terrain: Terrain, cx: number, cz: number, blo
       const mr = hash2(gx, gz, seed + 8);
       let acc = 0;
       for (const m of MUTATIONS) {
-        const boost = m.id === 'cursed' && biome.id === 'haunted' ? 5 : m.id === 'frozen' && biome.id === 'taiga' ? 6 : m.id === 'golden' && biome.id === 'goldbasin' ? 2 : 1;
+        const boost =
+          m.id === 'cursed' && biome.id === 'haunted'
+            ? 5
+            : m.id === 'frozen' && biome.id === 'taiga'
+              ? 6
+              : m.id === 'golden' && biome.id === 'goldbasin'
+                ? 2
+                : 1;
         acc += m.chance * boost;
         if (mr < acc) {
           mut = m.id;
@@ -144,9 +159,22 @@ export function generateChunkTrees(terrain: Terrain, cx: number, cz: number, blo
       if (md) scale *= md.scale;
       const maxHp = Math.round(wood.hp * scale * scale * (md?.hpMult ?? 1));
       out.push({
-        id, wood: wood.id, style: wood.style, x, y, z, scale, yaw: hash2(gx, gz, seed + 9) * Math.PI * 2, mut,
-        maxHp, hp: maxHp, height: style.height * scale, radius: style.radius * scale,
-        nightOnly: !!wood.nightOnly, glow: wood.props.includes('glows') || wood.emissive ? 1 : 0, hidden: false,
+        id,
+        wood: wood.id,
+        style: wood.style,
+        x,
+        y,
+        z,
+        scale,
+        yaw: hash2(gx, gz, seed + 9) * Math.PI * 2,
+        mut,
+        maxHp,
+        hp: maxHp,
+        height: style.height * scale,
+        radius: style.radius * scale,
+        nightOnly: !!wood.nightOnly,
+        glow: wood.props.includes('glows') || wood.emissive ? 1 : 0,
+        hidden: false,
       });
     }
   }
@@ -157,7 +185,9 @@ export function generateChunkTrees(terrain: Terrain, cx: number, cz: number, blo
 export const logUnits = (len: number, r: number): number => (len / LOG_SEG) * (r / LOG_R0) * (r / LOG_R0);
 
 /** Plan how a felled tree splits into log segments (bottom → top). */
-export function planLogs(tree: Pick<Tree, 'height' | 'radius' | 'style'>): { len: number; r: number; offset: number }[] {
+export function planLogs(
+  tree: Pick<Tree, 'height' | 'radius' | 'style'>,
+): { len: number; r: number; offset: number }[] {
   const stump = 0.5;
   const usable = Math.max(1.5, tree.height * 0.85 - stump);
   const n = Math.max(1, Math.ceil(usable / LOG_SEG));

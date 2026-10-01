@@ -1,5 +1,6 @@
 /** Hand-placed world layout shared by data tables and terrain generation (no imports → no cycles). */
-export const riverX = (z: number): number => 190 + 45 * Math.sin((z - 66) * 0.0072) + 16 * Math.sin((z - 66) * 0.02);
+export const riverX = (z: number): number =>
+  190 + 45 * Math.sin((z - 66) * 0.0072) + 16 * Math.sin((z - 66) * 0.02);
 export const RIVER_WIDTH = 13;
 
 export const BRIDGE_Z = -40;

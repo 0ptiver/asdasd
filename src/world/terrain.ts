@@ -30,17 +30,47 @@ export const ROADS: Pt[][] = [
   [[0, 0], [100, 150], [300, 320], c('goldbasin')],
   [[0, 0], [-120, 130], [-340, 280], c('swamp')],
   [[0, 0], [0, 300], [0, 640], c('desert')],
-  [[c('birchwood')[0], c('birchwood')[1]], [-800, -160], [c('crystal')[0] + 150, c('crystal')[1]]],
-  [[c('redwood')[0], c('redwood')[1]], [-300, -800], [c('taiga')[0] + 200, c('taiga')[1] + 100]],
-  [[c('cherry')[0], c('cherry')[1]], [760, -300], [c('volcano')[0] - 200, c('volcano')[1] + 100]],
-  [[c('swamp')[0], c('swamp')[1]], [-800, 600], [c('haunted')[0] + 200, c('haunted')[1] - 40]],
-  [[DOCK.x, DOCK.z], [DOCK.x - 60, DOCK.z - 10], [30, 20]],
-  [[c('desert')[0], c('desert')[1]], [-30, 900], [0, 700]],
+  [
+    [c('birchwood')[0], c('birchwood')[1]],
+    [-800, -160],
+    [c('crystal')[0] + 150, c('crystal')[1]],
+  ],
+  [
+    [c('redwood')[0], c('redwood')[1]],
+    [-300, -800],
+    [c('taiga')[0] + 200, c('taiga')[1] + 100],
+  ],
+  [
+    [c('cherry')[0], c('cherry')[1]],
+    [760, -300],
+    [c('volcano')[0] - 200, c('volcano')[1] + 100],
+  ],
+  [
+    [c('swamp')[0], c('swamp')[1]],
+    [-800, 600],
+    [c('haunted')[0] + 200, c('haunted')[1] - 40],
+  ],
+  [
+    [DOCK.x, DOCK.z],
+    [DOCK.x - 60, DOCK.z - 10],
+    [30, 20],
+  ],
+  [
+    [c('desert')[0], c('desert')[1]],
+    [-30, 900],
+    [0, 700],
+  ],
 ];
 
 /** Railway: hub station -> far biomes. Used by rail vehicles and rendering. */
 export const RAIL: Pt[] = [
-  [HUB.trainStation[0], HUB.trainStation[1]], [-160, -140], [-320, -260], [-520, -420], [-700, -640], [-760, -900], [-720, -1020],
+  [HUB.trainStation[0], HUB.trainStation[1]],
+  [-160, -140],
+  [-320, -260],
+  [-520, -420],
+  [-700, -640],
+  [-760, -900],
+  [-720, -1020],
 ];
 
 function segDist(px: number, pz: number, a: Pt, b: Pt): number {
@@ -62,7 +92,13 @@ export function roadDist(x: number, z: number): number {
       const a = r[i]!;
       const b = r[i + 1]!;
       // cheap bbox reject
-      if (x < Math.min(a[0], b[0]) - 40 || x > Math.max(a[0], b[0]) + 40 || z < Math.min(a[1], b[1]) - 40 || z > Math.max(a[1], b[1]) + 40) continue;
+      if (
+        x < Math.min(a[0], b[0]) - 40 ||
+        x > Math.max(a[0], b[0]) + 40 ||
+        z < Math.min(a[1], b[1]) - 40 ||
+        z > Math.max(a[1], b[1]) + 40
+      )
+        continue;
       const d = segDist(x, z, a, b);
       if (d < best) best = d;
     }
@@ -147,7 +183,12 @@ export class Terrain {
       }
       case 'goldbasin': {
         const bowl = -smoothstep(0.1, 0.9, 1 - score) * 6;
-        return b.baseHeight + bowl + (fbm(x * 0.01, z * 0.01, s + 6, 4) - 0.5) * b.amp * 2 + smoothstep(0.7, 1.1, score) * 14;
+        return (
+          b.baseHeight +
+          bowl +
+          (fbm(x * 0.01, z * 0.01, s + 6, 4) - 0.5) * b.amp * 2 +
+          smoothstep(0.7, 1.1, score) * 14
+        );
       }
       case 'volcano': {
         const cone = Math.pow(Math.max(0, 1 - d / (b.radius * 0.95)), 1.7) * 130;
@@ -221,7 +262,14 @@ export class Terrain {
     // average the biome base heights (no noise) for road bed smoothing
     const blend = this.biomeBlend(x, z);
     let h = 0;
-    for (const w of blend.weights) h += w.w * (w.biome.id === 'sky' ? -8 : w.biome.id === 'tropics' ? 3 : w.biome.baseHeight + (fbm(x * 0.003, z * 0.003, this.seed + 1, 2) - 0.5) * w.biome.amp);
+    for (const w of blend.weights)
+      h +=
+        w.w *
+        (w.biome.id === 'sky'
+          ? -8
+          : w.biome.id === 'tropics'
+            ? 3
+            : w.biome.baseHeight + (fbm(x * 0.003, z * 0.003, this.seed + 1, 2) - 0.5) * w.biome.amp);
     return h;
   }
 

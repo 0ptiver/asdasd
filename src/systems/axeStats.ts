@@ -12,7 +12,10 @@ export interface AxeStats {
   broken: boolean;
 }
 
-export function axeStats(a: AxeInst, extra: { woodcutting?: number; petBonus?: number; prestige?: number } = {}): AxeStats {
+export function axeStats(
+  a: AxeInst,
+  extra: { woodcutting?: number; petBonus?: number; prestige?: number } = {},
+): AxeStats {
   const def = AXE_BY_ID[a.def]!;
   let dmg = def.damage * upgradeDamageMult(a.up);
   dmg *= 1 + (a.ench.sharpness ?? 0) * 0.08;
@@ -29,7 +32,7 @@ export function woodMultiplier(def: AxeDef, woodId: string): number {
   if (!w) return 1;
   let m = def.mult[woodId] ?? 1;
   if (def.tier < w.minTier) m *= Math.pow(0.18, w.minTier - def.tier);
-  if ((def.ability === 'burn') && w.props.includes('burns')) m *= 1.6;
+  if (def.ability === 'burn' && w.props.includes('burns')) m *= 1.6;
   if (def.ability === 'freeze' && w.props.includes('burns')) m *= 1.15;
   return m;
 }

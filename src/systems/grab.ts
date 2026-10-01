@@ -41,7 +41,10 @@ export class GrabSystem implements System {
     }
     const limit = pl.strength();
     if (log.mass > limit) {
-      sim.bus.emit('notify', { text: `Too heavy! Needs strength ${Math.ceil(log.mass)} (you have ${Math.floor(limit)})`, kind: 'bad' });
+      sim.bus.emit('notify', {
+        text: `Too heavy! Needs strength ${Math.ceil(log.mass)} (you have ${Math.floor(limit)})`,
+        kind: 'bad',
+      });
       return;
     }
     const t = log.body.translation();
@@ -108,7 +111,8 @@ export class GrabSystem implements System {
     let ty = r.oy + r.dy * (this.dist + 3);
     let tz = r.oz + r.dz * (this.dist + 3);
     // keep within reach of the player
-    const hx = tx - pl.x, hz = tz - pl.z;
+    const hx = tx - pl.x,
+      hz = tz - pl.z;
     const hd = Math.hypot(hx, hz);
     const reach = this.reach();
     if (hd > reach) {
@@ -120,12 +124,18 @@ export class GrabSystem implements System {
     const t = l.body.translation();
     const q = l.body.rotation();
     const a = rotate(this.localAnchor, q);
-    const ax = t.x + a.x, ay = t.y + a.y, az = t.z + a.z;
-    const ex = tx - ax, ey = ty - ay, ez = tz - az;
+    const ax = t.x + a.x,
+      ay = t.y + a.y,
+      az = t.z + a.z;
+    const ex = tx - ax,
+      ey = ty - ay,
+      ez = tz - az;
     const heavy = Math.min(1, pl.strength() / (l.mass * 1.6));
     const gain = 10 * (0.35 + 0.65 * heavy);
     const maxV = 22 * (0.4 + 0.6 * heavy);
-    let vx = ex * gain, vy = ey * gain, vz = ez * gain;
+    let vx = ex * gain,
+      vy = ey * gain,
+      vz = ez * gain;
     const sp = Math.hypot(vx, vy, vz);
     if (sp > maxV) {
       vx *= maxV / sp;
@@ -148,7 +158,10 @@ export class GrabSystem implements System {
   }
 }
 
-function rotate(v: { x: number; y: number; z: number }, q: { x: number; y: number; z: number; w: number }): { x: number; y: number; z: number } {
+function rotate(
+  v: { x: number; y: number; z: number },
+  q: { x: number; y: number; z: number; w: number },
+): { x: number; y: number; z: number } {
   const ix = q.w * v.x + q.y * v.z - q.z * v.y;
   const iy = q.w * v.y + q.z * v.x - q.x * v.z;
   const iz = q.w * v.z + q.x * v.y - q.y * v.x;

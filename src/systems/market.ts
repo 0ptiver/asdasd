@@ -78,8 +78,13 @@ export class MarketSystem implements System {
   logPrice(wood: string, units: number, mut: string | null, fortune = 0): number {
     const w = WOOD_BY_ID[wood];
     if (!w) return 0;
-    const mv = mut ? ({ giant: 3, golden: 5, frozen: 2.5, cursed: 8 } as Record<string, number>)[mut] ?? 1 : 1;
-    return Math.max(1, Math.round(w.baseValue * units * mv * this.woodMult(wood) * this.bonus() * (1 + fortune * 0.1)));
+    const mv = mut
+      ? (({ giant: 3, golden: 5, frozen: 2.5, cursed: 8 } as Record<string, number>)[mut] ?? 1)
+      : 1;
+    return Math.max(
+      1,
+      Math.round(w.baseValue * units * mv * this.woodMult(wood) * this.bonus() * (1 + fortune * 0.1)),
+    );
   }
 
   /** Record that `units` of wood were sold (pushes price down). */
@@ -119,7 +124,12 @@ export class MarketSystem implements System {
     if (!this.m.event && this.rng.chance(0.06)) {
       const def = this.rng.pick(EVENTS);
       const w = def.wood ? this.rng.pick(WOODS.filter((x) => x.weight > 0 && !x.guardianOnly)) : null;
-      this.m.event = { id: def.id, until: st.time + (240 + this.rng.range(0, 240)) / SEC_PER_DAY, wood: w?.id, mult: def.mult };
+      this.m.event = {
+        id: def.id,
+        until: st.time + (240 + this.rng.range(0, 240)) / SEC_PER_DAY,
+        wood: w?.id,
+        mult: def.mult,
+      };
       this.sim.bus.emit('notify', { text: def.text(w?.name ?? ''), kind: 'info' });
     }
   }

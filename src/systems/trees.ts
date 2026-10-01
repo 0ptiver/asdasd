@@ -22,7 +22,10 @@ export class TreeSystem implements System {
   listeners: ((t: Tree, kind: TreeChange) => void)[] = [];
   private tick = 0;
   /** extra respawn-speed multiplier from the equipped axe etc. (set by chopping system when a tree is felled) */
-  constructor(private sim: Sim, private streamer: Streamer) {}
+  constructor(
+    private sim: Sim,
+    private streamer: Streamer,
+  ) {}
 
   init(): void {
     this.streamer.onLoad.push((c) => this.addChunk(c));
@@ -82,14 +85,17 @@ export class TreeSystem implements System {
   /** Trees within `r` of (x,z) that are standing. */
   near(x: number, z: number, r: number, out: Tree[] = []): Tree[] {
     const r2 = r * r;
-    const x0 = Math.floor((x - r) / CELL), x1 = Math.floor((x + r) / CELL);
-    const z0 = Math.floor((z - r) / CELL), z1 = Math.floor((z + r) / CELL);
+    const x0 = Math.floor((x - r) / CELL),
+      x1 = Math.floor((x + r) / CELL);
+    const z0 = Math.floor((z - r) / CELL),
+      z1 = Math.floor((z + r) / CELL);
     for (let ix = x0; ix <= x1; ix++)
       for (let iz = z0; iz <= z1; iz++) {
         const a = this.grid.get(gkey(ix, iz));
         if (!a) continue;
         for (const t of a) {
-          const dx = t.x - x, dz = t.z - z;
+          const dx = t.x - x,
+            dz = t.z - z;
           if (dx * dx + dz * dz <= r2) out.push(t);
         }
       }
@@ -152,7 +158,9 @@ export class TreeSystem implements System {
       const night = isNight(st.time);
       for (const t of this.trees.values()) {
         if (!t.nightOnly || t.hidden) continue;
-        const inGrid = (this.grid.get(gkey(Math.floor(t.x / CELL), Math.floor(t.z / CELL))) ?? []).includes(t);
+        const inGrid = (this.grid.get(gkey(Math.floor(t.x / CELL), Math.floor(t.z / CELL))) ?? []).includes(
+          t,
+        );
         if (night && !inGrid) {
           this.gridAdd(t);
           this.emit(t, 'night');
@@ -182,7 +190,10 @@ export class TreeSystem implements System {
       if (!t || this.isGone(t)) continue;
       const w = this.sim.physics.world;
       const body = w.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(t.x, t.y + 3, t.z));
-      w.createCollider(RAPIER.ColliderDesc.cylinder(3, Math.max(0.3, t.radius * 0.85)).setCollisionGroups(GROUPS.stump), body);
+      w.createCollider(
+        RAPIER.ColliderDesc.cylinder(3, Math.max(0.3, t.radius * 0.85)).setCollisionGroups(GROUPS.stump),
+        body,
+      );
       this.colliders.set(id, body);
     }
     for (const [id] of this.colliders) if (!want.has(id)) this.dropCollider(id);

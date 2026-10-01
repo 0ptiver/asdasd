@@ -46,6 +46,7 @@ export class Input {
   private touchLook = { id: -1, lx: 0, ly: 0 };
   private touchBtn = new Set<string>();
   onAction: ((a: Action) => void) | null = null;
+  onPointerLost: (() => void) | null = null;
   onKeyRaw: ((e: KeyboardEvent) => boolean) | null = null;
 
   constructor(
@@ -62,7 +63,9 @@ export class Input {
     window.addEventListener('wheel', this.wh, { passive: true });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     document.addEventListener('pointerlockchange', () => {
+      const was = this.pointerLocked;
       this.pointerLocked = document.pointerLockElement === this.canvas;
+      if (was && !this.pointerLocked) this.onPointerLost?.();
     });
     canvas.addEventListener('touchstart', this.ts, { passive: false });
     canvas.addEventListener('touchmove', this.tm, { passive: false });
@@ -165,6 +168,10 @@ export class Input {
   held(a: Action): boolean {
     const code = this.getSettings().keys[a];
     return (code !== undefined && this.down.has(code)) || this.touchBtn.has(a);
+  }
+  /** Raw key edge by KeyboardEvent.code (hotbar digits etc). */
+  rawPressed(code: string): boolean {
+    return this.edge.has(code);
   }
   pressed(a: Action): boolean {
     const code = this.getSettings().keys[a];

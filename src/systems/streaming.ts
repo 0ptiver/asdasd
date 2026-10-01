@@ -46,7 +46,8 @@ export class Streamer implements System {
     this.focus = { x, z };
     const cx0 = worldToChunk(x);
     const cz0 = worldToChunk(z);
-    for (let dx = -radius; dx <= radius; dx++) for (let dz = -radius; dz <= radius; dz++) this.load(cx0 + dx, cz0 + dz);
+    for (let dx = -radius; dx <= radius; dx++)
+      for (let dz = -radius; dz <= radius; dz++) this.load(cx0 + dx, cz0 + dz);
   }
 
   private load(cx: number, cz: number): void {
@@ -56,10 +57,16 @@ export class Streamer implements System {
     const stride = N + 1;
     const heights = new Float32Array(stride * stride);
     const step = S / N;
-    for (let ix = 0; ix <= N; ix++) for (let iz = 0; iz <= N; iz++) heights[ix * stride + iz] = t.heightAt(cx * S + ix * step, cz * S + iz * step);
+    for (let ix = 0; ix <= N; ix++)
+      for (let iz = 0; iz <= N; iz++)
+        heights[ix * stride + iz] = t.heightAt(cx * S + ix * step, cz * S + iz * step);
     const mid = t.biomeAt(cx * S + S / 2, cz * S + S / 2);
     let skyHeights: Float32Array | null = null;
-    if (BIOME_BY_ID.sky && Math.hypot(cx * S + S / 2 - BIOME_BY_ID.sky.center[0], cz * S + S / 2 - BIOME_BY_ID.sky.center[1]) < BIOME_BY_ID.sky.radius * 1.3) {
+    if (
+      BIOME_BY_ID.sky &&
+      Math.hypot(cx * S + S / 2 - BIOME_BY_ID.sky.center[0], cz * S + S / 2 - BIOME_BY_ID.sky.center[1]) <
+        BIOME_BY_ID.sky.radius * 1.3
+    ) {
       skyHeights = new Float32Array(stride * stride);
       let any = false;
       for (let ix = 0; ix <= N; ix++)
@@ -81,15 +88,26 @@ export class Streamer implements System {
     const w = this.sim.physics.world;
     const stride = N + 1;
     // Rapier heightfield: heights[ix*(N+1)+iz], x then z; centered on the body origin.
-    const body = w.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(c.cx * S + S / 2, 0, c.cz * S + S / 2));
-    const hf = RAPIER.ColliderDesc.heightfield(N, N, c.heights, { x: S, y: 1, z: S }).setCollisionGroups(GROUPS.ground).setFriction(1.0);
+    const body = w.createRigidBody(
+      RAPIER.RigidBodyDesc.fixed().setTranslation(c.cx * S + S / 2, 0, c.cz * S + S / 2),
+    );
+    const hf = RAPIER.ColliderDesc.heightfield(N, N, c.heights, { x: S, y: 1, z: S })
+      .setCollisionGroups(GROUPS.ground)
+      .setFriction(1.0);
     w.createCollider(hf, body);
     c.bodies.push(body);
     if (c.skyHeights) {
       const sh = new Float32Array(stride * stride);
       for (let i = 0; i < sh.length; i++) sh[i] = Number.isNaN(c.skyHeights[i]!) ? -400 : c.skyHeights[i]!;
-      const sb = w.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(c.cx * S + S / 2, 0, c.cz * S + S / 2));
-      w.createCollider(RAPIER.ColliderDesc.heightfield(N, N, sh, { x: S, y: 1, z: S }).setCollisionGroups(GROUPS.ground).setFriction(1.0), sb);
+      const sb = w.createRigidBody(
+        RAPIER.RigidBodyDesc.fixed().setTranslation(c.cx * S + S / 2, 0, c.cz * S + S / 2),
+      );
+      w.createCollider(
+        RAPIER.ColliderDesc.heightfield(N, N, sh, { x: S, y: 1, z: S })
+          .setCollisionGroups(GROUPS.ground)
+          .setFriction(1.0),
+        sb,
+      );
       c.bodies.push(sb);
     }
   }

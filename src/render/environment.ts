@@ -49,10 +49,24 @@ export class Environment {
   readonly fog = new THREE.FogExp2(0xbfe3ff, 0.0035);
   private uniforms: Record<string, THREE.IUniform>;
   private cur: EnvState = {
-    zenith: new THREE.Color(0x4a90e2), horizon: new THREE.Color(0xbfe3ff), fog: new THREE.Color(0xbfe3ff), fogDensity: 0.0035,
-    light: new THREE.Color(0xfff2d8), ambient: new THREE.Color(0x8fa8c8), sunIntensity: 1.4, hemiIntensity: 0.9, indoor: 0,
+    zenith: new THREE.Color(0x4a90e2),
+    horizon: new THREE.Color(0xbfe3ff),
+    fog: new THREE.Color(0xbfe3ff),
+    fogDensity: 0.0035,
+    light: new THREE.Color(0xfff2d8),
+    ambient: new THREE.Color(0x8fa8c8),
+    sunIntensity: 1.4,
+    hemiIntensity: 0.9,
+    indoor: 0,
   };
-  private tgt = { ...this.cur, zenith: new THREE.Color(), horizon: new THREE.Color(), fog: new THREE.Color(), light: new THREE.Color(), ambient: new THREE.Color() };
+  private tgt = {
+    ...this.cur,
+    zenith: new THREE.Color(),
+    horizon: new THREE.Color(),
+    fog: new THREE.Color(),
+    light: new THREE.Color(),
+    ambient: new THREE.Color(),
+  };
   daylight = 1;
   weatherDark = 0;
   weatherFog = 0;
@@ -61,12 +75,23 @@ export class Environment {
 
   constructor(scene: THREE.Scene) {
     this.uniforms = {
-      zenith: { value: new THREE.Color() }, horizon: { value: new THREE.Color() }, sunDir: { value: new THREE.Vector3(0, 1, 0) },
-      day: { value: 1 }, stars: { value: 0 }, sunColor: { value: new THREE.Color(1, 0.9, 0.7) },
+      zenith: { value: new THREE.Color() },
+      horizon: { value: new THREE.Color() },
+      sunDir: { value: new THREE.Vector3(0, 1, 0) },
+      day: { value: 1 },
+      stars: { value: 0 },
+      sunColor: { value: new THREE.Color(1, 0.9, 0.7) },
     };
     this.sky = new THREE.Mesh(
       new THREE.SphereGeometry(1000, 32, 16),
-      new THREE.ShaderMaterial({ vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, uniforms: this.uniforms, side: THREE.BackSide, depthWrite: false, fog: false }),
+      new THREE.ShaderMaterial({
+        vertexShader: SKY_VERT,
+        fragmentShader: SKY_FRAG,
+        uniforms: this.uniforms,
+        side: THREE.BackSide,
+        depthWrite: false,
+        fog: false,
+      }),
     );
     this.sky.frustumCulled = false;
     this.sky.renderOrder = -10;
@@ -75,7 +100,12 @@ export class Environment {
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     const sc = this.sun.shadow.camera;
-    sc.left = -70; sc.right = 70; sc.top = 70; sc.bottom = -70; sc.near = 1; sc.far = 400;
+    sc.left = -70;
+    sc.right = 70;
+    sc.top = 70;
+    sc.bottom = -70;
+    sc.near = 1;
+    sc.far = 400;
     this.sun.shadow.bias = -0.0006;
     this.sun.shadow.normalBias = 0.6;
   }
@@ -89,7 +119,15 @@ export class Environment {
     }
   }
 
-  update(dt: number, blend: BiomeBlend, days: number, focus: THREE.Vector3, headlamp: boolean, weather: string, camY: number): void {
+  update(
+    dt: number,
+    blend: BiomeBlend,
+    days: number,
+    focus: THREE.Vector3,
+    headlamp: boolean,
+    weather: string,
+    camY: number,
+  ): void {
     const dl = daylight(days);
     this.daylight = dl;
     // target atmosphere = weighted biome mix
@@ -103,11 +141,21 @@ export class Environment {
     let indoor = 0;
     for (const w of blend.weights) {
       const b = w.biome;
-      t.zenith.r += this.scratch.set(b.sky).r * w.w; t.zenith.g += this.scratch.g * w.w; t.zenith.b += this.scratch.b * w.w;
-      t.horizon.r += this.scratch.set(b.horizon).r * w.w; t.horizon.g += this.scratch.g * w.w; t.horizon.b += this.scratch.b * w.w;
-      t.fog.r += this.scratch.set(b.fog).r * w.w; t.fog.g += this.scratch.g * w.w; t.fog.b += this.scratch.b * w.w;
-      t.light.r += this.scratch.set(b.light).r * w.w; t.light.g += this.scratch.g * w.w; t.light.b += this.scratch.b * w.w;
-      t.ambient.r += this.scratch.set(b.ambient).r * w.w; t.ambient.g += this.scratch.g * w.w; t.ambient.b += this.scratch.b * w.w;
+      t.zenith.r += this.scratch.set(b.sky).r * w.w;
+      t.zenith.g += this.scratch.g * w.w;
+      t.zenith.b += this.scratch.b * w.w;
+      t.horizon.r += this.scratch.set(b.horizon).r * w.w;
+      t.horizon.g += this.scratch.g * w.w;
+      t.horizon.b += this.scratch.b * w.w;
+      t.fog.r += this.scratch.set(b.fog).r * w.w;
+      t.fog.g += this.scratch.g * w.w;
+      t.fog.b += this.scratch.b * w.w;
+      t.light.r += this.scratch.set(b.light).r * w.w;
+      t.light.g += this.scratch.g * w.w;
+      t.light.b += this.scratch.b * w.w;
+      t.ambient.r += this.scratch.set(b.ambient).r * w.w;
+      t.ambient.g += this.scratch.g * w.w;
+      t.ambient.b += this.scratch.b * w.w;
       fd += b.fogDensity * w.w;
       if (b.indoor) indoor += w.w;
     }
@@ -135,11 +183,33 @@ export class Environment {
     const gold = 1 - Math.min(1, Math.abs(this.sunDir.y) * 3.2);
     if (dl > 0.05) hz.lerp(new THREE.Color(0xff9a5a), gold * 0.45 * dl);
     // weather
-    const wd = weather === 'rain' || weather === 'snow' ? 0.35 : weather === 'blizzard' || weather === 'sandstorm' || weather === 'ash' ? 0.6 : weather === 'fog' ? 0.25 : 0;
+    const wd =
+      weather === 'rain' || weather === 'snow'
+        ? 0.35
+        : weather === 'blizzard' || weather === 'sandstorm' || weather === 'ash'
+          ? 0.6
+          : weather === 'fog'
+            ? 0.25
+            : 0;
     this.weatherDark += (wd - this.weatherDark) * Math.min(1, dt);
-    const wf = weather === 'fog' ? 3 : weather === 'blizzard' ? 4 : weather === 'sandstorm' ? 4.5 : weather === 'rain' ? 1.8 : weather === 'ash' ? 2 : weather === 'snow' ? 1.6 : 1;
+    const wf =
+      weather === 'fog'
+        ? 3
+        : weather === 'blizzard'
+          ? 4
+          : weather === 'sandstorm'
+            ? 4.5
+            : weather === 'rain'
+              ? 1.8
+              : weather === 'ash'
+                ? 2
+                : weather === 'snow'
+                  ? 1.6
+                  : 1;
     this.weatherFog += (wf - this.weatherFog) * Math.min(1, dt * 0.8);
-    const grey = new THREE.Color(weather === 'sandstorm' ? 0xc8a070 : weather === 'ash' ? 0x4a3a38 : 0x8a929c).multiplyScalar(0.3 + 0.7 * dl);
+    const grey = new THREE.Color(
+      weather === 'sandstorm' ? 0xc8a070 : weather === 'ash' ? 0x4a3a38 : 0x8a929c,
+    ).multiplyScalar(0.3 + 0.7 * dl);
     z.lerp(grey, this.weatherDark);
     hz.lerp(grey, this.weatherDark);
     // indoor: pitch dark
@@ -160,14 +230,21 @@ export class Environment {
     // lights
     const sunUp = Math.max(0, this.sunDir.y);
     this.sun.color.copy(c.light).lerp(new THREE.Color(0xff9a60), gold * 0.5);
-    this.sun.intensity = (0.15 + 1.35 * Math.pow(sunUp, 0.5)) * (1 - this.weatherDark * 0.7) * (1 - c.indoor * 0.97) * (dl > 0.02 ? 1 : 0.1);
+    this.sun.intensity =
+      (0.15 + 1.35 * Math.pow(sunUp, 0.5)) *
+      (1 - this.weatherDark * 0.7) *
+      (1 - c.indoor * 0.97) *
+      (dl > 0.02 ? 1 : 0.1);
     // moon light at night
     if (dl < 0.25) {
       this.sun.color.lerp(new THREE.Color(0x8aa0ff), 1 - dl * 4);
       this.sun.intensity = Math.max(this.sun.intensity, 0.28 * (1 - c.indoor));
     }
     const dirY = Math.abs(this.sunDir.y) < 0.12 ? 0.12 : this.sunDir.y;
-    const lightDir = dl > 0.2 ? this.sunDir : new THREE.Vector3(-this.sunDir.x, Math.max(0.35, -this.sunDir.y), -this.sunDir.z).normalize();
+    const lightDir =
+      dl > 0.2
+        ? this.sunDir
+        : new THREE.Vector3(-this.sunDir.x, Math.max(0.35, -this.sunDir.y), -this.sunDir.z).normalize();
     void dirY;
     this.sun.position.copy(focus).addScaledVector(lightDir, 160);
     this.sun.target.position.copy(focus);

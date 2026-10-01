@@ -40,7 +40,8 @@ function build(style: TreeStyle, lo: boolean): { t: Prims; f: Prims } {
       break;
     case 'birch':
       t.cyl(0.18, 0.32, 7, seg, 0, 3.5, 0, W);
-      if (!lo) for (let i = 0; i < 4; i++) t.box(0.34, 0.08, 0.34, 0, 1 + i * 1.5, 0, 0x222222, [0, i, 0], 0.25);
+      if (!lo)
+        for (let i = 0; i < 4; i++) t.box(0.34, 0.08, 0.34, 0, 1 + i * 1.5, 0, 0x222222, [0, i, 0], 0.25);
       f.sphere(1.8, 0, 7.4, 0, W, [1, 1.2, 1], det);
       f.sphere(1.2, 0.9, 6.3, 0.3, W, undefined, det);
       break;
@@ -62,7 +63,18 @@ function build(style: TreeStyle, lo: boolean): { t: Prims; f: Prims } {
       }
       break;
     case 'palm':
-      for (let i = 0; i < 5; i++) t.cyl(0.2 - i * 0.012, 0.26 - i * 0.012, 1.9, 6, Math.sin(i * 0.4) * i * 0.12, 0.95 + i * 1.75, 0, W, [0, 0, -0.07 * i]);
+      for (let i = 0; i < 5; i++)
+        t.cyl(
+          0.2 - i * 0.012,
+          0.26 - i * 0.012,
+          1.9,
+          6,
+          Math.sin(i * 0.4) * i * 0.12,
+          0.95 + i * 1.75,
+          0,
+          W,
+          [0, 0, -0.07 * i],
+        );
       for (let i = 0; i < 7; i++) {
         const a = (i / 7) * Math.PI * 2;
         f.box(0.5, 0.1, 3.2, Math.cos(a) * 1.5, 8.7, Math.sin(a) * 1.5, W, [0.5, -a + Math.PI / 2, 0]);
@@ -81,7 +93,11 @@ function build(style: TreeStyle, lo: boolean): { t: Prims; f: Prims } {
       t.cyl(0.3, 0.5, 4.2, seg, 0, 3.0, 0, W);
       for (let i = 0; i < 5; i++) {
         const a = (i / 5) * Math.PI * 2;
-        t.cyl(0.06, 0.16, 2.6, 5, Math.cos(a) * 0.7, 1.0, Math.sin(a) * 0.7, W, [Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5]);
+        t.cyl(0.06, 0.16, 2.6, 5, Math.cos(a) * 0.7, 1.0, Math.sin(a) * 0.7, W, [
+          Math.sin(a) * 0.5,
+          0,
+          -Math.cos(a) * 0.5,
+        ]);
       }
       f.sphere(2.1, 0, 6, 0, W, [1.1, 0.8, 1.1], det);
       f.sphere(1.5, 1.4, 5.2, 0.6, W, undefined, det);
@@ -164,7 +180,11 @@ export function treeGeo(style: TreeStyle, lo: boolean): TreeGeo {
 export const stumpGeo = (() => {
   let g: THREE.BufferGeometry | null = null;
   return () => {
-    if (!g) g = new Prims().cyl(0.42, 0.55, 0.7, 7, 0, 0.35, 0, W).cyl(0.4, 0.4, 0.05, 7, 0, 0.72, 0, W, undefined, 1.2).build();
+    if (!g)
+      g = new Prims()
+        .cyl(0.42, 0.55, 0.7, 7, 0, 0.35, 0, W)
+        .cyl(0.4, 0.4, 0.05, 7, 0, 0.72, 0, W, undefined, 1.2)
+        .build();
     return g;
   };
 })();

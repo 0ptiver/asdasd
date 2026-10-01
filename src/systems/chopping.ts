@@ -67,7 +67,8 @@ export class ChoppingSystem implements System {
         this.dots.delete(id);
         continue;
       }
-      if (Math.floor(d.left * 2) !== Math.floor((d.left + dt) * 2)) this.applyDamage(t, d.dmg, false, null, true);
+      if (Math.floor(d.left * 2) !== Math.floor((d.left + dt) * 2))
+        this.applyDamage(t, d.dmg, false, null, true);
     }
     if (!axe) {
       this.swing = -1;
@@ -75,7 +76,11 @@ export class ChoppingSystem implements System {
       this.target = null;
       return;
     }
-    const stats = axeStats(axe, { woodcutting: levelOf(st.skills.woodcutting), petBonus: st.activePet === 'pet_beaver' ? 0.05 : 0, prestige: st.prestige.level * 0.1 });
+    const stats = axeStats(axe, {
+      woodcutting: levelOf(st.skills.woodcutting),
+      petBonus: st.activePet === 'pet_beaver' ? 0.05 : 0,
+      prestige: st.prestige.level * 0.1,
+    });
     const def = stats.def;
     this.target = locked ? null : this.findTarget(stats.reach);
     if (this.cooldown > 0) this.cooldown -= dt;
@@ -83,7 +88,8 @@ export class ChoppingSystem implements System {
     if (this.swing < 0) {
       if (wantChop && this.cooldown <= 0) {
         if (def.ability === 'fuel' && st.player.fuel <= 0) {
-          if (!this.fuelWarned) sim.bus.emit('notify', { text: 'Chainsaw out of fuel — use a Fuel Can', kind: 'bad' });
+          if (!this.fuelWarned)
+            sim.bus.emit('notify', { text: 'Chainsaw out of fuel — use a Fuel Can', kind: 'bad' });
           this.fuelWarned = true;
         } else {
           this.fuelWarned = false;
@@ -135,7 +141,8 @@ export class ChoppingSystem implements System {
     }
     let dmg = stats.damage * woodMultiplier(def, t.wood);
     let crit = false;
-    const critChance = def.ability === 'crit' ? (def.id === 'crystal_axe' || def.id === 'prismatic_axe' ? 0.22 : 0.15) : 0.04;
+    const critChance =
+      def.ability === 'crit' ? (def.id === 'crystal_axe' || def.id === 'prismatic_axe' ? 0.22 : 0.15) : 0.04;
     if (rng.chance(critChance)) {
       crit = true;
       dmg *= def.id === 'crystal_axe' ? 2.5 : def.id === 'prismatic_axe' ? 3 : 2;
@@ -144,7 +151,14 @@ export class ChoppingSystem implements System {
     this.lastHitDmg = dmg;
     this.lastCrit = crit;
     sim.bus.emit('sfx', { name: 'chop', x: t.x, y: t.y + 1.2, z: t.z, vol: 0.8 });
-    sim.bus.emit('fx', { kind: 'chips', x: t.x - Math.sin(Math.atan2(t.x - pl.x, t.z - pl.z)) * t.radius * 0.5, y: t.y + 1.2, z: t.z, color: WOOD_BY_ID[t.wood]!.color, n: crit ? 14 : 7 });
+    sim.bus.emit('fx', {
+      kind: 'chips',
+      x: t.x - Math.sin(Math.atan2(t.x - pl.x, t.z - pl.z)) * t.radius * 0.5,
+      y: t.y + 1.2,
+      z: t.z,
+      color: WOOD_BY_ID[t.wood]!.color,
+      n: crit ? 14 : 7,
+    });
     this.applyDamage(t, dmg, crit, axe, false);
     // abilities on hit
     const w = WOOD_BY_ID[t.wood]!;
@@ -159,11 +173,22 @@ export class ChoppingSystem implements System {
       case 'cleave': {
         const splash = def.id === 'beast_axe' ? 0.5 : def.id === 'guardian_cleaver' ? 0.4 : 0.25;
         const near = sim.trees.near(t.x, t.z, 5);
-        for (const o of near) if (o !== t) this.applyDamage(o, dmg * splash * woodMultiplier(def, o.wood) / woodMultiplier(def, t.wood), false, axe, true);
+        for (const o of near)
+          if (o !== t)
+            this.applyDamage(
+              o,
+              (dmg * splash * woodMultiplier(def, o.wood)) / woodMultiplier(def, t.wood),
+              false,
+              axe,
+              true,
+            );
         break;
       }
       case 'chain': {
-        const near = sim.trees.near(t.x, t.z, 12).filter((o) => o !== t).slice(0, 3);
+        const near = sim.trees
+          .near(t.x, t.z, 12)
+          .filter((o) => o !== t)
+          .slice(0, 3);
         for (const o of near) {
           this.applyDamage(o, dmg * 0.5, false, axe, true);
           sim.bus.emit('fx', { kind: 'bolt', x: o.x, y: o.y + 4, z: o.z, n: 1, color: 0xffee66 });
@@ -173,7 +198,8 @@ export class ChoppingSystem implements System {
       case 'gravity':
         for (const l of sim.logs.logs.values()) {
           const lt = l.body.translation();
-          if (Math.hypot(lt.x - pl.x, lt.z - pl.z) < 12) l.body.applyImpulse({ x: 0, y: l.mass * 1.4, z: 0 }, true);
+          if (Math.hypot(lt.x - pl.x, lt.z - pl.z) < 12)
+            l.body.applyImpulse({ x: 0, y: l.mass * 1.4, z: 0 }, true);
         }
         break;
       case 'lifesteal':
@@ -182,7 +208,13 @@ export class ChoppingSystem implements System {
     }
   }
 
-  private applyDamage(t: Tree, dmg: number, crit: boolean, axe: import('../save/schema').AxeInst | null, splash: boolean): void {
+  private applyDamage(
+    t: Tree,
+    dmg: number,
+    crit: boolean,
+    axe: import('../save/schema').AxeInst | null,
+    splash: boolean,
+  ): void {
     const sim = this.sim;
     if (t.hidden) return;
     sim.bus.emit('tree:chop', { treeId: t.id, wood: t.wood, dmg, crit });
@@ -200,7 +232,10 @@ export class ChoppingSystem implements System {
     if (WOOD_BY_ID[t.wood]!.props.includes('regrows')) respawnMult *= 0.5;
     sim.trees.markFelled(t, respawnMult);
     const pl = sim.player;
-    sim.logs.fellTree(t, pl.x, pl.z, { refine: def?.ability === 'refine', vacuum: def?.ability === 'vacuum' || (axe?.ench.magnet ?? 0) > 0 });
+    sim.logs.fellTree(t, pl.x, pl.z, {
+      refine: def?.ability === 'refine',
+      vacuum: def?.ability === 'vacuum' || (axe?.ench.magnet ?? 0) > 0,
+    });
     // xp & stats
     const w = WOOD_BY_ID[t.wood]!;
     const xp = Math.max(1, Math.round(Math.sqrt(w.baseValue) * 3 * t.scale));

@@ -6,14 +6,56 @@ import { HUB, BRIDGE, DOCK, riverX } from './layout';
 import type { Terrain } from './terrain';
 
 export type PartDesc =
-  | { t: 'box'; x: number; y: number; z: number; w: number; h: number; d: number; c: number; ry?: number; rx?: number; rz?: number }
-  | { t: 'cyl'; x: number; y: number; z: number; rt: number; rb: number; h: number; c: number; seg?: number; rx?: number; rz?: number }
+  | {
+      t: 'box';
+      x: number;
+      y: number;
+      z: number;
+      w: number;
+      h: number;
+      d: number;
+      c: number;
+      ry?: number;
+      rx?: number;
+      rz?: number;
+    }
+  | {
+      t: 'cyl';
+      x: number;
+      y: number;
+      z: number;
+      rt: number;
+      rb: number;
+      h: number;
+      c: number;
+      seg?: number;
+      rx?: number;
+      rz?: number;
+    }
   | { t: 'cone'; x: number; y: number; z: number; r: number; h: number; c: number; seg?: number }
   | { t: 'pyr'; x: number; y: number; z: number; w: number; h: number; d: number; c: number }
   | { t: 'sphere'; x: number; y: number; z: number; r: number; c: number };
 
-export interface BoxCollider { x: number; y: number; z: number; hx: number; hy: number; hz: number; ry: number }
-export interface SignDesc { text: string; x: number; y: number; z: number; ry: number; w: number; h: number; bg: string; fg: string }
+export interface BoxCollider {
+  x: number;
+  y: number;
+  z: number;
+  hx: number;
+  hy: number;
+  hz: number;
+  ry: number;
+}
+export interface SignDesc {
+  text: string;
+  x: number;
+  y: number;
+  z: number;
+  ry: number;
+  w: number;
+  h: number;
+  bg: string;
+  fg: string;
+}
 
 export interface InteractPoint {
   id: string;
@@ -21,11 +63,29 @@ export interface InteractPoint {
   x: number;
   z: number;
   radius: number;
-  kind: 'npc' | 'shop' | 'sell' | 'sawmill' | 'board' | 'garage' | 'gas' | 'dock' | 'train' | 'forge' | 'fast_travel';
+  kind:
+    | 'npc'
+    | 'shop'
+    | 'sell'
+    | 'sawmill'
+    | 'board'
+    | 'garage'
+    | 'gas'
+    | 'dock'
+    | 'train'
+    | 'forge'
+    | 'fast_travel';
   arg?: string;
 }
 
-export interface Zone { x: number; y: number; z: number; hx: number; hy: number; hz: number }
+export interface Zone {
+  x: number;
+  y: number;
+  z: number;
+  hx: number;
+  hy: number;
+  hz: number;
+}
 
 export interface HubLayout {
   parts: PartDesc[];
@@ -40,7 +100,14 @@ export interface HubLayout {
   pierY: number;
 }
 
-const WOOD = 0xa87a4a, WOOD_D = 0x7a5530, STONE = 0xb8b0a0, ROOF_R = 0xa8402e, ROOF_B = 0x3a5a8a, ROOF_G = 0x3a7a4a, PLASTER = 0xefe4cc, PLASTER2 = 0xe0d0b0;
+const WOOD = 0xa87a4a,
+  WOOD_D = 0x7a5530,
+  STONE = 0xb8b0a0,
+  ROOF_R = 0xa8402e,
+  ROOF_B = 0x3a5a8a,
+  ROOF_G = 0x3a7a4a,
+  PLASTER = 0xefe4cc,
+  PLASTER2 = 0xe0d0b0;
 
 class Struct {
   parts: PartDesc[] = [];
@@ -49,7 +116,17 @@ class Struct {
   points: InteractPoint[] = [];
   lamps: { x: number; y: number; z: number }[] = [];
 
-  box(x: number, y: number, z: number, w: number, h: number, d: number, c: number, solid = false, ry = 0): void {
+  box(
+    x: number,
+    y: number,
+    z: number,
+    w: number,
+    h: number,
+    d: number,
+    c: number,
+    solid = false,
+    ry = 0,
+  ): void {
     this.parts.push({ t: 'box', x, y: y + h / 2, z, w, h, d, c, ry });
     if (solid) this.boxes.push({ x, y: y + h / 2, z, hx: w / 2, hy: h / 2, hz: d / 2, ry });
   }
@@ -59,19 +136,42 @@ class Struct {
   pyr(x: number, y: number, z: number, w: number, h: number, d: number, c: number): void {
     this.parts.push({ t: 'pyr', x, y: y + h / 2, z, w, h, d, c });
   }
-  sign(text: string, x: number, y: number, z: number, ry: number, w = 3.2, h = 0.9, bg = '#4a3220', fg = '#f6dc9a'): void {
+  sign(
+    text: string,
+    x: number,
+    y: number,
+    z: number,
+    ry: number,
+    w = 3.2,
+    h = 0.9,
+    bg = '#4a3220',
+    fg = '#f6dc9a',
+  ): void {
     this.signs.push({ text, x, y, z, ry, w, h, bg, fg });
   }
 
   /** A shop-style building: walls, pitched roof, door + windows on the face turned toward (tx,tz). Solid collider. */
-  building(x: number, z: number, w: number, d: number, h: number, wall: number, roof: number, y0: number, label?: string, face: [number, number] = [0, 0]): void {
+  building(
+    x: number,
+    z: number,
+    w: number,
+    d: number,
+    h: number,
+    wall: number,
+    roof: number,
+    y0: number,
+    label?: string,
+    face: [number, number] = [0, 0],
+  ): void {
     const raw = Math.atan2(face[0] - x, face[1] - z);
     const q = Math.round(raw / (Math.PI / 2));
     const ry = q * (Math.PI / 2);
     const swap = Math.abs(q) % 2 === 1;
-    const sn = Math.sin(ry), cs = Math.cos(ry);
+    const sn = Math.sin(ry),
+      cs = Math.cos(ry);
     const loc = (dx: number, dz: number): [number, number] => [x + dx * cs + dz * sn, z - dx * sn + dz * cs];
-    const W = swap ? d : w, D = swap ? w : d;
+    const W = swap ? d : w,
+      D = swap ? w : d;
     this.box(x, y0, z, W, h, D, wall, true);
     this.box(x, y0 + h, z, W + 1, 0.4, D + 1, roof);
     this.pyr(x, y0 + h + 0.4, z, W + 1.6, h * 0.55, D + 1.6, roof);
@@ -101,8 +201,28 @@ class Struct {
       const t = i / n;
       this.box(x0 + (x1 - x0) * t, y, z0 + (z1 - z0) * t, 0.18, 1.2, 0.18, WOOD_D);
     }
-    this.parts.push({ t: 'box', x: (x0 + x1) / 2, y: y + 0.95, z: (z0 + z1) / 2, w: 0.1, h: 0.12, d: len, c: WOOD, ry: ang });
-    this.parts.push({ t: 'box', x: (x0 + x1) / 2, y: y + 0.55, z: (z0 + z1) / 2, w: 0.1, h: 0.12, d: len, c: WOOD, ry: ang });
+    this.parts.push({
+      t: 'box',
+      x: (x0 + x1) / 2,
+      y: y + 0.95,
+      z: (z0 + z1) / 2,
+      w: 0.1,
+      h: 0.12,
+      d: len,
+      c: WOOD,
+      ry: ang,
+    });
+    this.parts.push({
+      t: 'box',
+      x: (x0 + x1) / 2,
+      y: y + 0.55,
+      z: (z0 + z1) / 2,
+      w: 0.1,
+      h: 0.12,
+      d: len,
+      c: WOOD,
+      ry: ang,
+    });
   }
 }
 
@@ -120,13 +240,25 @@ export function buildHub(terrain: Terrain): HubLayout {
 
   // ---------------- shops
   const T = HUB;
-  s.building(T.toolShop[0], T.toolShop[1], 12, 9, 5, PLASTER, ROOF_R, Y, 'GUS & SONS — TOOLS', [T.toolShop[0], 100]);
-  s.building(T.landOffice[0], T.landOffice[1], 12, 9, 5, PLASTER2, ROOF_B, Y, 'LAND OFFICE', [T.landOffice[0], 100]);
+  s.building(T.toolShop[0], T.toolShop[1], 12, 9, 5, PLASTER, ROOF_R, Y, 'GUS & SONS — TOOLS', [
+    T.toolShop[0],
+    100,
+  ]);
+  s.building(T.landOffice[0], T.landOffice[1], 12, 9, 5, PLASTER2, ROOF_B, Y, 'LAND OFFICE', [
+    T.landOffice[0],
+    100,
+  ]);
   s.building(T.smithy[0], T.smithy[1], 11, 9, 4.5, 0x9a8f86, 0x4a4a52, Y, 'THE SMITHY', [-100, T.smithy[1]]);
   s.cyl(T.smithy[0] + 3.5, Y + 4, T.smithy[1] - 2, 0.7, 4, 0x6a625a, 8);
   s.box(T.smithy[0] - 8, Y, T.smithy[1], 0.9, 1.0, 1.6, 0x3a3a42, true); // anvil
-  s.building(T.exchange[0], T.exchange[1], 12, 9, 5, 0xe8d8b0, ROOF_G, Y, 'LUMBER EXCHANGE', [T.exchange[0], -100]);
-  s.building(T.garage[0], T.garage[1], 16, 12, 5, 0xc8ccd4, 0x5a6270, Y, 'GARAGE & MECHANIC', [T.garage[0], 100]);
+  s.building(T.exchange[0], T.exchange[1], 12, 9, 5, 0xe8d8b0, ROOF_G, Y, 'LUMBER EXCHANGE', [
+    T.exchange[0],
+    -100,
+  ]);
+  s.building(T.garage[0], T.garage[1], 16, 12, 5, 0xc8ccd4, 0x5a6270, Y, 'GARAGE & MECHANIC', [
+    T.garage[0],
+    100,
+  ]);
   s.box(T.garage[0], Y, T.garage[1] + 6.1, 8, 4, 0.2, 0x5a6270); // roll-up door
 
   // quest board
@@ -135,7 +267,16 @@ export function buildHub(terrain: Terrain): HubLayout {
   s.box(T.questBoard[0], Y + 1.2, T.questBoard[1], 4.6, 2.2, 0.25, 0x8a6a40);
   s.box(T.questBoard[0], Y + 3.3, T.questBoard[1], 5, 0.3, 0.9, ROOF_R);
   s.sign('QUESTS & JOBS', T.questBoard[0], Y + 3.0, T.questBoard[1] + 0.3, 0, 3.6, 0.7);
-  for (let i = 0; i < 6; i++) s.box(T.questBoard[0] - 1.7 + (i % 3) * 1.7, Y + 1.7 + Math.floor(i / 3) * 0.8, T.questBoard[1] + 0.15, 1.0, 0.6, 0.04, 0xf2e8c8);
+  for (let i = 0; i < 6; i++)
+    s.box(
+      T.questBoard[0] - 1.7 + (i % 3) * 1.7,
+      Y + 1.7 + Math.floor(i / 3) * 0.8,
+      T.questBoard[1] + 0.15,
+      1.0,
+      0.6,
+      0.04,
+      0xf2e8c8,
+    );
 
   // ---------------- public sawmill
   const [sx, sz] = T.sawmill;
@@ -182,13 +323,32 @@ export function buildHub(terrain: Terrain): HubLayout {
   s.points.push({ id: 'station', label: 'Train station', x: tx, z: tz + 4, radius: 5, kind: 'train' });
 
   // ---------------- decor: houses, lamps, fences
-  const houses: [number, number, number][] = [[-70, -8, ROOF_G], [-72, 8, ROOF_B], [66, -48, ROOF_R], [-52, -56, ROOF_B], [78, 56, ROOF_G], [-30, 66, ROOF_R]];
-  for (const [hx, hz, rc] of houses) s.building(hx, hz, 8, 7, 3.6, PLASTER, rc, terrain.heightAt(hx, hz), undefined, [0, 0]);
+  const houses: [number, number, number][] = [
+    [-70, -8, ROOF_G],
+    [-72, 8, ROOF_B],
+    [66, -48, ROOF_R],
+    [-52, -56, ROOF_B],
+    [78, 56, ROOF_G],
+    [-30, 66, ROOF_R],
+  ];
+  for (const [hx, hz, rc] of houses)
+    s.building(hx, hz, 8, 7, 3.6, PLASTER, rc, terrain.heightAt(hx, hz), undefined, [0, 0]);
   for (const a of [0, 1, 2, 3, 4, 5, 6, 7]) {
     const ang = (a / 8) * Math.PI * 2;
     s.lamp(Math.cos(ang) * 14, Y, Math.sin(ang) * 14);
   }
-  for (const [lx, lz] of [[-26, -8], [26, -8], [0, -20], [-24, 28], [22, 26], [40, 22], [50, 30], [-58, 20], [70, 8]] as [number, number][]) s.lamp(lx, Y, lz);
+  for (const [lx, lz] of [
+    [-26, -8],
+    [26, -8],
+    [0, -20],
+    [-24, 28],
+    [22, 26],
+    [40, 22],
+    [50, 30],
+    [-58, 20],
+    [70, 8],
+  ] as [number, number][])
+    s.lamp(lx, Y, lz);
   s.fence(-14, 18, -4, 18, Y);
   s.fence(4, 18, 14, 18, Y);
   // welcome sign at spawn
@@ -197,17 +357,29 @@ export function buildHub(terrain: Terrain): HubLayout {
   s.box(2.8, Y, 22, 0.3, 2.6, 0.3, WOOD_D);
 
   // ---------------- bridge over the river (toll bridge)
-  const bx = BRIDGE.x, bz = BRIDGE.z, by = BRIDGE.y;
+  const bx = BRIDGE.x,
+    bz = BRIDGE.z,
+    by = BRIDGE.y;
   const half = BRIDGE.halfLen;
   s.box(bx, by - 0.5, bz, half * 2, 0.5, BRIDGE.width, 0x8a6a45, true);
   for (const side of [-1, 1]) {
     s.box(bx, by, bz + side * (BRIDGE.width / 2 - 0.15), half * 2, 0.9, 0.3, WOOD_D);
-    for (let i = -half + 1; i <= half; i += 5) s.box(bx + i, by - 3, bz + side * (BRIDGE.width / 2 - 0.3), 0.6, 3, 0.6, WOOD_D);
+    for (let i = -half + 1; i <= half; i += 5)
+      s.box(bx + i, by - 3, bz + side * (BRIDGE.width / 2 - 0.3), 0.6, 3, 0.6, WOOD_D);
   }
-  for (let i = -half + 4; i <= half - 4; i += 10) s.box(bx + i, by - 5.2, bz, 1.2, 5, BRIDGE.width - 1, WOOD_D);
+  for (let i = -half + 4; i <= half - 4; i += 10)
+    s.box(bx + i, by - 5.2, bz, 1.2, 5, BRIDGE.width - 1, WOOD_D);
   s.sign('TOLL BRIDGE — $25', bx - half - 0.5, by + 2.2, bz - 5.2, 0, 3.6, 0.8, '#3a2a1a', '#ffd070');
   s.box(bx - half + 2, by, bz + 6, 2.4, 2.4, 2.4, 0x9a6a4a, true); // toll booth
-  s.points.push({ id: 'toll', label: 'Toll booth ($25)', x: bx - half + 2, z: bz + 6, radius: 4, kind: 'shop', arg: 'toll' });
+  s.points.push({
+    id: 'toll',
+    label: 'Toll booth ($25)',
+    x: bx - half + 2,
+    z: bz + 6,
+    radius: 4,
+    kind: 'shop',
+    arg: 'toll',
+  });
 
   // ---------------- dock
   const shoreProbe = (() => {
@@ -221,13 +393,30 @@ export function buildHub(terrain: Terrain): HubLayout {
     s.box(shoreProbe + i, pierY - 3.5, DOCK.z - 2.4, 0.5, 3.5, 0.5, WOOD_D);
     s.box(shoreProbe + i, pierY - 3.5, DOCK.z + 2.4, 0.5, 3.5, 0.5, WOOD_D);
   }
-  s.building(shoreProbe - 6, DOCK.z - 7, 9, 6, 3.6, 0xc8d8e0, 0x2a6a8a, terrain.heightAt(shoreProbe - 6, DOCK.z - 7), 'HARBOR', [shoreProbe + 6, DOCK.z]);
+  s.building(
+    shoreProbe - 6,
+    DOCK.z - 7,
+    9,
+    6,
+    3.6,
+    0xc8d8e0,
+    0x2a6a8a,
+    terrain.heightAt(shoreProbe - 6, DOCK.z - 7),
+    'HARBOR',
+    [shoreProbe + 6, DOCK.z],
+  );
   s.points.push({ id: 'dock', label: 'Harbor', x: shoreProbe + 2, z: DOCK.z, radius: 6, kind: 'dock' });
 
   return {
-    parts: s.parts, boxes: s.boxes, signs: s.signs, points: s.points, sellZone, sawIntake,
+    parts: s.parts,
+    boxes: s.boxes,
+    signs: s.signs,
+    points: s.points,
+    sellZone,
+    sawIntake,
     garagePad: { x: T.garage[0], y: Y, z: T.garage[1] + 13, yaw: 0 },
     boatPad: { x: shoreProbe + pierLen - 2, y: 0, z: DOCK.z + 7, yaw: Math.PI / 2 },
-    lamps: s.lamps, pierY,
+    lamps: s.lamps,
+    pierY,
   };
 }

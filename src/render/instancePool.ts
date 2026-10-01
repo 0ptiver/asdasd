@@ -11,7 +11,10 @@ export function glowMaterial(): THREE.MeshLambertMaterial {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGlow = aGlow;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying float vGlow;')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vGlow;');
+      .replace(
+        '#include <emissivemap_fragment>',
+        '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vGlow;',
+      );
   };
   glowMat = m;
   return m;
@@ -26,7 +29,12 @@ export class InstancePool {
   private mat4 = new THREE.Matrix4();
   private dirty = false;
 
-  constructor(geo: THREE.BufferGeometry, readonly capacity: number, material: THREE.Material = glowMaterial(), castShadow = true) {
+  constructor(
+    geo: THREE.BufferGeometry,
+    readonly capacity: number,
+    material: THREE.Material = glowMaterial(),
+    castShadow = true,
+  ) {
     const g = geo.clone();
     this.glow = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
     this.glow.setUsage(THREE.DynamicDrawUsage);

@@ -25,7 +25,7 @@ export class SawmillSystem implements System {
 
   /** Plank count produced from a given volume of wood. */
   planksFor(units: number, mut: string | null, level = 0): number {
-    const mv = mut ? MUTATION_BY_ID[mut]?.valueMult ?? 1 : 1;
+    const mv = mut ? (MUTATION_BY_ID[mut]?.valueMult ?? 1) : 1;
     const yieldMult = 1 + level * 0.15;
     return Math.max(1, Math.round(units * 2 * Math.max(1, mv * 0.9) * yieldMult));
   }

@@ -12,8 +12,30 @@ export interface ShopEntry {
   owned?: boolean;
 }
 
-export const TOOL_ITEMS = ['fuel_can', 'repair_kit', 'shovel', 'fishing_rod', 'pickaxe', 'treasure_map', 'stamina_tonic', 'warm_stew'];
-export const GEAR_ITEMS = ['backpack_s', 'backpack_m', 'backpack_l', 'boots_work', 'boots_spring', 'gloves_work', 'gloves_power', 'headlamp', 'fire_suit', 'snow_gear', 'scuba_mask', 'jetpack'];
+export const TOOL_ITEMS = [
+  'fuel_can',
+  'repair_kit',
+  'shovel',
+  'fishing_rod',
+  'pickaxe',
+  'treasure_map',
+  'stamina_tonic',
+  'warm_stew',
+];
+export const GEAR_ITEMS = [
+  'backpack_s',
+  'backpack_m',
+  'backpack_l',
+  'boots_work',
+  'boots_spring',
+  'gloves_work',
+  'gloves_power',
+  'headlamp',
+  'fire_suit',
+  'snow_gear',
+  'scuba_mask',
+  'jetpack',
+];
 
 export class ShopSystem implements System {
   readonly name = 'shop';
@@ -35,7 +57,10 @@ export class ShopSystem implements System {
     return AXES.filter((a) => a.source === vendor)
       .sort((a, b) => a.price - b.price)
       .map((a) => ({
-        kind: 'axe' as const, id: a.id, price: a.price, owned: this.ownsAxe(a.id),
+        kind: 'axe' as const,
+        id: a.id,
+        price: a.price,
+        owned: this.ownsAxe(a.id),
         locked: a.tier >= 3 && a.tier > maxT + 1 ? `Own a tier ${a.tier - 1} axe first` : undefined,
       }));
   }
@@ -55,6 +80,7 @@ export class ShopSystem implements System {
     if (!s.econ.spend(def.price, 'axe')) return false;
     s.inventory.giveAxe(id);
     s.state.stats.axesBought = (s.state.stats.axesBought ?? 0) + 1;
+    s.quests?.progress('buy', 'axe', 1);
     s.bus.emit('sfx', { name: 'coin' });
     return true;
   }
@@ -201,7 +227,9 @@ export class ShopSystem implements System {
       if (a.uid === this.sim.state.equipped && this.sim.state.axes.length <= 1) continue;
       (out[d.tier] ??= []).push(a.uid);
     }
-    return Object.entries(out).filter(([t, l]) => l.length >= 3 && Number(t) >= 1 && Number(t) < 6).map(([t, l]) => ({ tier: Number(t), axes: l }));
+    return Object.entries(out)
+      .filter(([t, l]) => l.length >= 3 && Number(t) >= 1 && Number(t) < 6)
+      .map(([t, l]) => ({ tier: Number(t), axes: l }));
   }
   forge(uids: string[], plankId: string): boolean {
     const s = this.sim;
@@ -237,7 +265,8 @@ export class ShopSystem implements System {
   removeAxe(uid: string): void {
     const st = this.sim.state;
     st.axes = st.axes.filter((a) => a.uid !== uid);
-    for (let i = 0; i < st.inv.hotbar.length; i++) if (st.inv.hotbar[i] === 'axe:' + uid) st.inv.hotbar[i] = null;
+    for (let i = 0; i < st.inv.hotbar.length; i++)
+      if (st.inv.hotbar[i] === 'axe:' + uid) st.inv.hotbar[i] = null;
     if (st.equipped === uid) st.equipped = st.axes[0]?.uid ?? null;
   }
 }

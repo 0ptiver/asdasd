@@ -10,7 +10,16 @@ export class Prims {
   private q = new THREE.Quaternion();
   private e = new THREE.Euler();
 
-  private add(g: THREE.BufferGeometry, color: number, x: number, y: number, z: number, rot?: V3, scale?: V3, shade = 1): this {
+  private add(
+    g: THREE.BufferGeometry,
+    color: number,
+    x: number,
+    y: number,
+    z: number,
+    rot?: V3,
+    scale?: V3,
+    shade = 1,
+  ): this {
     let geo = g.index ? g.toNonIndexed() : g;
     geo.deleteAttribute('uv');
     const col = new THREE.Color(color);
@@ -24,17 +33,42 @@ export class Prims {
     geo.setAttribute('color', new THREE.BufferAttribute(arr, 3));
     this.e.set(rot?.[0] ?? 0, rot?.[1] ?? 0, rot?.[2] ?? 0);
     this.q.setFromEuler(this.e);
-    this.tmp.compose(new THREE.Vector3(x, y, z), this.q, new THREE.Vector3(scale?.[0] ?? 1, scale?.[1] ?? 1, scale?.[2] ?? 1));
+    this.tmp.compose(
+      new THREE.Vector3(x, y, z),
+      this.q,
+      new THREE.Vector3(scale?.[0] ?? 1, scale?.[1] ?? 1, scale?.[2] ?? 1),
+    );
     if (geo === g) geo = g.clone();
     geo.applyMatrix4(this.tmp);
     this.geos.push(geo);
     return this;
   }
 
-  box(w: number, h: number, d: number, x: number, y: number, z: number, color: number, rot?: V3, shade = 1): this {
+  box(
+    w: number,
+    h: number,
+    d: number,
+    x: number,
+    y: number,
+    z: number,
+    color: number,
+    rot?: V3,
+    shade = 1,
+  ): this {
     return this.add(new THREE.BoxGeometry(w, h, d), color, x, y, z, rot, undefined, shade);
   }
-  cyl(rt: number, rb: number, h: number, seg: number, x: number, y: number, z: number, color: number, rot?: V3, shade = 1): this {
+  cyl(
+    rt: number,
+    rb: number,
+    h: number,
+    seg: number,
+    x: number,
+    y: number,
+    z: number,
+    color: number,
+    rot?: V3,
+    shade = 1,
+  ): this {
     return this.add(new THREE.CylinderGeometry(rt, rb, h, seg), color, x, y, z, rot, undefined, shade);
   }
   cone(r: number, h: number, seg: number, x: number, y: number, z: number, color: number, rot?: V3): this {

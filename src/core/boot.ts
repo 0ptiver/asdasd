@@ -14,6 +14,10 @@ import { MarketSystem } from '../systems/market';
 import { SawmillSystem } from '../systems/sawmill';
 import { SellSystem } from '../systems/sell';
 import { ShopSystem } from '../systems/shop';
+import { ControlsSystem } from '../systems/controls';
+import { ItemUseSystem } from '../systems/itemUse';
+import { QuestSystem } from '../systems/quests';
+import { BiomeSystem } from '../systems/biomeSystem';
 
 /** Assembles all simulation systems in dependency order. */
 export function buildSim(game: Game, state: GameState): Sim {
@@ -31,5 +35,9 @@ export function buildSim(game: Game, state: GameState): Sim {
   sim.sawmill = sim.add(new SawmillSystem(sim));
   sim.sell = sim.add(new SellSystem(sim));
   sim.shop = sim.add(new ShopSystem(sim));
+  sim.itemUse = sim.add(new ItemUseSystem(sim));
+  sim.quests = sim.add(new QuestSystem(sim));
+  sim.biome = sim.add(new BiomeSystem(sim));
+  sim.add(new ControlsSystem(sim));
   return sim;
 }

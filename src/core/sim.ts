@@ -16,8 +16,12 @@ import type { MarketSystem } from '../systems/market';
 import type { SawmillSystem } from '../systems/sawmill';
 import type { SellSystem } from '../systems/sell';
 import type { ShopSystem } from '../systems/shop';
+import type { ItemUseSystem } from '../systems/itemUse';
+import type { QuestSystem } from '../systems/quests';
+import type { BiomeSystem } from '../systems/biomeSystem';
 import { levelOf } from './skills';
 import type { SkillId } from '../data/types';
+import type { WorldMap } from '../ui/worldMap';
 
 export interface System {
   readonly name: string;
@@ -47,6 +51,18 @@ export class Sim {
   sawmill!: SawmillSystem;
   sell!: SellSystem;
   shop!: ShopSystem;
+  itemUse!: ItemUseSystem;
+  quests!: QuestSystem;
+  biome!: BiomeSystem;
+  worldMap: WorldMap | null = null;
+  garage?: { give(id: string): boolean };
+  jobs?: { render(): any };
+  fastTravel?: {
+    stations(): { id: string; x: number; z: number; unlocked: boolean }[];
+    nearestStation(x: number, z: number, r: number): { id: string } | null;
+    travel(id: string): boolean;
+  };
+  treasure?: { useMap(): boolean };
   plots?: { insideOwnedPlot(x: number, z: number): boolean };
   private autosaveAcc = 0;
 
@@ -86,7 +102,10 @@ export class Sim {
     const after = levelOf(st.skills[skill]);
     if (after > before) {
       this.bus.emit('level', { skill, level: after });
-      this.bus.emit('notify', { text: `${skill[0]!.toUpperCase() + skill.slice(1)} level ${after}!`, kind: 'good' });
+      this.bus.emit('notify', {
+        text: `${skill[0]!.toUpperCase() + skill.slice(1)} level ${after}!`,
+        kind: 'good',
+      });
     }
   }
 

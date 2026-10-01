@@ -73,7 +73,18 @@ export class LogSystem implements System {
       if (out.length >= 250) break;
       const t = l.body.translation();
       const q = l.body.rotation();
-      out.push({ w: l.wood, len: l.len, r: l.r, x: t.x, y: t.y, z: t.z, q: [q.x, q.y, q.z, q.w], mut: l.mut, age: l.age, owner: l.owner });
+      out.push({
+        w: l.wood,
+        len: l.len,
+        r: l.r,
+        x: t.x,
+        y: t.y,
+        z: t.z,
+        q: [q.x, q.y, q.z, q.w],
+        mut: l.mut,
+        age: l.age,
+        owner: l.owner,
+      });
     }
     this.sim.state.world.logs = out;
   }
@@ -84,15 +95,25 @@ export class LogSystem implements System {
   }
 
   spawnLog(
-    wood: string, len: number, r: number, pos: { x: number; y: number; z: number },
-    q: [number, number, number, number] | null, vel: { x: number; y: number; z: number } | null, mut: string | null, owner = 'world',
+    wood: string,
+    len: number,
+    r: number,
+    pos: { x: number; y: number; z: number },
+    q: [number, number, number, number] | null,
+    vel: { x: number; y: number; z: number } | null,
+    mut: string | null,
+    owner = 'world',
   ): Log | null {
     const def = WOOD_BY_ID[wood];
     if (!def) return null;
     if (this.logs.size >= CONFIG.physics.maxLogs) this.cullOldest();
     const w = this.sim.physics.world;
     const rb = w.createRigidBody(
-      RAPIER.RigidBodyDesc.dynamic().setTranslation(pos.x, pos.y, pos.z).setLinearDamping(0.12).setAngularDamping(0.5).setCcdEnabled(true),
+      RAPIER.RigidBodyDesc.dynamic()
+        .setTranslation(pos.x, pos.y, pos.z)
+        .setLinearDamping(0.12)
+        .setAngularDamping(0.5)
+        .setCcdEnabled(true),
     );
     if (q) rb.setRotation({ x: q[0], y: q[1], z: q[2], w: q[3] }, true);
     if (vel) rb.setLinvel(vel, true);
@@ -100,10 +121,29 @@ export class LogSystem implements System {
     const mult = def.props.includes('heavy') ? 2.2 : 1;
     const mass = Math.max(1, units * MASS_PER_UNIT * mult * (MUTATION_BY_ID[mut ?? '']?.valueMult ? 1 : 1));
     const col = w.createCollider(
-      RAPIER.ColliderDesc.cylinder(len / 2, r).setMass(mass).setFriction(0.9).setRestitution(0.05).setCollisionGroups(GROUPS.log).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS),
+      RAPIER.ColliderDesc.cylinder(len / 2, r)
+        .setMass(mass)
+        .setFriction(0.9)
+        .setRestitution(0.05)
+        .setCollisionGroups(GROUPS.log)
+        .setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS),
       rb,
     );
-    const log: Log = { id: this.nextId++, body: rb, wood, len, r, units, mass, mut, owner, age: 0, grabbed: false, busy: false, magnet: false };
+    const log: Log = {
+      id: this.nextId++,
+      body: rb,
+      wood,
+      len,
+      r,
+      units,
+      mass,
+      mut,
+      owner,
+      age: 0,
+      grabbed: false,
+      busy: false,
+      magnet: false,
+    };
     this.logs.set(log.id, log);
     this.byCollider.set(col.handle, log.id);
     this.sim.bus.emit('log:spawn', { logId: log.id, wood });
@@ -120,20 +160,47 @@ export class LogSystem implements System {
 
   private cullOldest(): void {
     let oldest: Log | null = null;
-    for (const l of this.logs.values()) if (!l.grabbed && !l.busy && (!oldest || l.age > oldest.age)) oldest = l;
+    for (const l of this.logs.values())
+      if (!l.grabbed && !l.busy && (!oldest || l.age > oldest.age)) oldest = l;
     if (oldest) this.removeLog(oldest.id);
   }
 
   /** Begin felling: tree is already marked felled by the caller. */
-  fellTree(tree: Tree, fromX: number, fromZ: number, opts: { refine?: boolean; vacuum?: boolean } = {}): void {
+  fellTree(
+    tree: Tree,
+    fromX: number,
+    fromZ: number,
+    opts: { refine?: boolean; vacuum?: boolean } = {},
+  ): void {
     let dx = tree.x - fromX;
     let dz = tree.z - fromZ;
     const l = Math.hypot(dx, dz) || 1;
     dx /= l;
     dz /= l;
     const f: FallingTree = {
-      id: tree.id, tree: { id: tree.id, wood: tree.wood, style: tree.style, x: tree.x, y: tree.y, z: tree.z, scale: tree.scale, yaw: tree.yaw, mut: tree.mut, height: tree.height, radius: tree.radius },
-      dx, dz, angle: 0.03, omega: 0.15, t: 0, done: false, refine: !!opts.refine, owner: 'player', vacuum: !!opts.vacuum,
+      id: tree.id,
+      tree: {
+        id: tree.id,
+        wood: tree.wood,
+        style: tree.style,
+        x: tree.x,
+        y: tree.y,
+        z: tree.z,
+        scale: tree.scale,
+        yaw: tree.yaw,
+        mut: tree.mut,
+        height: tree.height,
+        radius: tree.radius,
+      },
+      dx,
+      dz,
+      angle: 0.03,
+      omega: 0.15,
+      t: 0,
+      done: false,
+      refine: !!opts.refine,
+      owner: 'player',
+      vacuum: !!opts.vacuum,
     };
     this.falling.push(f);
     for (const cb of this.onFallStart) cb(f);
@@ -152,8 +219,17 @@ export class LogSystem implements System {
     const q = quatFromTo(0, 1, 0, ax, ay, az);
     const mutDef = t.mut ? MUTATION_BY_ID[t.mut] : null;
     void mutDef;
-    this.sim.bus.emit('fx', { kind: 'leaves', x: t.x + ax * t.height * 0.6, y: t.y + 2, z: t.z + az * t.height * 0.6, n: 26, color: WOOD_BY_ID[t.wood]?.leaf || WOOD_BY_ID[t.wood]?.color });
-    this.sim.bus.emit('shake', { amount: Math.min(0.9, 0.12 + t.height * 0.025 * (t.scale > 1.4 ? 1.3 : 1)) });
+    this.sim.bus.emit('fx', {
+      kind: 'leaves',
+      x: t.x + ax * t.height * 0.6,
+      y: t.y + 2,
+      z: t.z + az * t.height * 0.6,
+      n: 26,
+      color: WOOD_BY_ID[t.wood]?.leaf || WOOD_BY_ID[t.wood]?.color,
+    });
+    this.sim.bus.emit('shake', {
+      amount: Math.min(0.9, 0.12 + t.height * 0.025 * (t.scale > 1.4 ? 1.3 : 1)),
+    });
     this.sim.bus.emit('sfx', { name: 'thud', x: t.x, y: t.y, z: t.z, vol: Math.min(1, 0.5 + t.scale * 0.3) });
     if (f.refine) {
       let units = 0;
@@ -173,9 +249,21 @@ export class LogSystem implements System {
       const vx = f.dx * Math.cos(f.angle) * speed;
       const vz = f.dz * Math.cos(f.angle) * speed;
       const vy = -Math.sin(f.angle) * speed;
-      const log = this.spawnLog(t.wood, p.len, p.r, { x: px, y: py, z: pz }, q, { x: vx, y: vy, z: vz }, t.mut, f.owner);
+      const log = this.spawnLog(
+        t.wood,
+        p.len,
+        p.r,
+        { x: px, y: py, z: pz },
+        q,
+        { x: vx, y: vy, z: vz },
+        t.mut,
+        f.owner,
+      );
       if (log) {
-        log.body.setAngvel({ x: rng.range(-0.8, 0.8), y: rng.range(-0.8, 0.8), z: rng.range(-0.8, 0.8) }, true);
+        log.body.setAngvel(
+          { x: rng.range(-0.8, 0.8), y: rng.range(-0.8, 0.8), z: rng.range(-0.8, 0.8) },
+          true,
+        );
         if (f.vacuum) log.magnet = true;
       }
     }
@@ -188,7 +276,7 @@ export class LogSystem implements System {
     for (const f of this.falling) {
       f.t += dt;
       const L = Math.max(3, f.tree.height * 0.55);
-      const alpha = (3 * 22) / (2 * L) * Math.sin(f.angle);
+      const alpha = ((3 * 22) / (2 * L)) * Math.sin(f.angle);
       f.omega += alpha * dt * 1.1;
       f.angle += f.omega * dt;
       const tipX = f.tree.x + f.dx * Math.sin(f.angle) * f.tree.height * 0.9;
@@ -218,13 +306,22 @@ export class LogSystem implements System {
         const f = def.props.includes('floats') ? 1.8 : def.props.includes('heavy') ? 0.8 : 1.25;
         const depth = Math.min(1, submerge / (l.r * 2));
         const lv = l.body.linvel();
-        l.body.applyImpulse({ x: -lv.x * 0.04 * l.mass * 0.3, y: (22 * f * depth * l.mass - lv.y * l.mass * 2) * dt, z: -lv.z * 0.04 * l.mass * 0.3 }, true);
+        l.body.applyImpulse(
+          {
+            x: -lv.x * 0.04 * l.mass * 0.3,
+            y: (22 * f * depth * l.mass - lv.y * l.mass * 2) * dt,
+            z: -lv.z * 0.04 * l.mass * 0.3,
+          },
+          true,
+        );
       }
       if (t.y < -80) {
         l.age = 1e9;
       }
       if (l.magnet && !l.grabbed) {
-        const dx = p.x - t.x, dz = p.z - t.z, dy = p.y + 1 - t.y;
+        const dx = p.x - t.x,
+          dz = p.z - t.z,
+          dy = p.y + 1 - t.y;
         const d = Math.hypot(dx, dy, dz);
         if (d < 3.5 || d > 60) l.magnet = false;
         else {
@@ -245,7 +342,10 @@ export class LogSystem implements System {
           }
           l.age = 0;
         } else if (l.age === CONFIG.physics.logDespawnSec - CONFIG.physics.logWarnSec && d < 200) {
-          this.sim.bus.emit('notify', { text: 'A log is about to despawn — move it to a plot or sell it', kind: 'info' });
+          this.sim.bus.emit('notify', {
+            text: 'A log is about to despawn — move it to a plot or sell it',
+            kind: 'info',
+          });
         }
       }
     }
@@ -257,7 +357,14 @@ export class LogSystem implements System {
 }
 
 /** Quaternion rotating unit vector (ax,ay,az) onto (bx,by,bz). */
-export function quatFromTo(ax: number, ay: number, az: number, bx: number, by: number, bz: number): [number, number, number, number] {
+export function quatFromTo(
+  ax: number,
+  ay: number,
+  az: number,
+  bx: number,
+  by: number,
+  bz: number,
+): [number, number, number, number] {
   const dot = ax * bx + ay * by + az * bz;
   if (dot > 0.99999) return [0, 0, 0, 1];
   if (dot < -0.99999) return [1, 0, 0, 0];

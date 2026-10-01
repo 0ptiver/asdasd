@@ -41,7 +41,16 @@ export class Sfx {
     return this.master;
   }
 
-  private noise(c: AudioContext, t0: number, dur: number, freq: number, q: number, type: BiquadFilterType, gain: number, out: AudioNode): void {
+  private noise(
+    c: AudioContext,
+    t0: number,
+    dur: number,
+    freq: number,
+    q: number,
+    type: BiquadFilterType,
+    gain: number,
+    out: AudioNode,
+  ): void {
     const src = c.createBufferSource();
     src.buffer = this.noiseBuf;
     const f = c.createBiquadFilter();
@@ -55,7 +64,16 @@ export class Sfx {
     src.start(t0, Math.random());
     src.stop(t0 + dur + 0.05);
   }
-  private tone(c: AudioContext, t0: number, dur: number, f0: number, f1: number, type: OscillatorType, gain: number, out: AudioNode): void {
+  private tone(
+    c: AudioContext,
+    t0: number,
+    dur: number,
+    f0: number,
+    f1: number,
+    type: OscillatorType,
+    gain: number,
+    out: AudioNode,
+  ): void {
     const o = c.createOscillator();
     o.type = type;
     o.frequency.setValueAtTime(f0, t0);
@@ -79,12 +97,14 @@ export class Sfx {
     let gain = this.volume * vol;
     let pan = 0;
     if (x !== undefined && z !== undefined) {
-      const dx = x - this.listener.x, dz = z - this.listener.z;
+      const dx = x - this.listener.x,
+        dz = z - this.listener.z;
       const d = Math.hypot(dx, dz, (y ?? 0) - this.listener.y);
       gain *= 1 / (1 + (d / 18) * (d / 18));
       if (gain < 0.01) return;
       // listener faces (-sin yaw, -cos yaw); right vector (cos yaw, -sin yaw)
-      const rx = Math.cos(this.listener.yaw), rz = -Math.sin(this.listener.yaw);
+      const rx = Math.cos(this.listener.yaw),
+        rz = -Math.sin(this.listener.yaw);
       pan = Math.max(-1, Math.min(1, (dx * rx + dz * rz) / (d + 1)));
     }
     const g = c.createGain();
@@ -131,7 +151,17 @@ export class Sfx {
         this.tone(c, now + 0.09, 0.2, 990, 990, 'triangle', 0.2, g);
         break;
       case 'level':
-        for (let i = 0; i < 4; i++) this.tone(c, now + i * 0.08, 0.25, 520 * Math.pow(1.26, i), 520 * Math.pow(1.26, i), 'triangle', 0.18, g);
+        for (let i = 0; i < 4; i++)
+          this.tone(
+            c,
+            now + i * 0.08,
+            0.25,
+            520 * Math.pow(1.26, i),
+            520 * Math.pow(1.26, i),
+            'triangle',
+            0.18,
+            g,
+          );
         break;
       case 'engine':
         this.tone(c, now, 0.1, 60, 55, 'sawtooth', 0.1, g);

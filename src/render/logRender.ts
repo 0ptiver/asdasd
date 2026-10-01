@@ -8,7 +8,12 @@ import { treeGeo } from './treeGeo';
 import { glowMaterial } from './instancePool';
 import type { TreeRenderer } from './treeRender';
 
-const logGeo = () => new Prims().cyl(1, 1, 1, 10, 0, 0, 0, 0xffffff, undefined, 0.74).cyl(0.97, 0.97, 0.02, 10, 0, 0.5, 0, 0xffffff, undefined, 1.15).cyl(0.97, 0.97, 0.02, 10, 0, -0.5, 0, 0xffffff, undefined, 1.15).build();
+const logGeo = () =>
+  new Prims()
+    .cyl(1, 1, 1, 10, 0, 0, 0, 0xffffff, undefined, 0.74)
+    .cyl(0.97, 0.97, 0.02, 10, 0, 0.5, 0, 0xffffff, undefined, 1.15)
+    .cyl(0.97, 0.97, 0.02, 10, 0, -0.5, 0, 0xffffff, undefined, 1.15)
+    .build();
 
 /** Logs: instanced cylinders, written from physics bodies each frame. Also animates falling trees. */
 export class LogRenderer {
@@ -22,7 +27,10 @@ export class LogRenderer {
   private colors = new Map<string, THREE.Color>();
   private falls = new Map<string, THREE.Group>();
 
-  constructor(private logs: LogSystem, private trees: TreeRenderer) {
+  constructor(
+    private logs: LogSystem,
+    private trees: TreeRenderer,
+  ) {
     this.group.add(this.pool.mesh);
     logs.onFallStart.push((f) => this.startFall(f));
     logs.onFallEnd.push((f) => this.endFall(f));
@@ -46,11 +54,29 @@ export class LogRenderer {
     const g = new THREE.Group();
     const geo = treeGeo(t.style, false);
     const col = this.trees.colorsOf(t as any);
-    const trunk = new THREE.Mesh(geo.trunk, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, color: col.trunk, emissive: col.trunk, emissiveIntensity: col.glowT * 0.5 }));
+    const trunk = new THREE.Mesh(
+      geo.trunk,
+      new THREE.MeshLambertMaterial({
+        vertexColors: true,
+        flatShading: true,
+        color: col.trunk,
+        emissive: col.trunk,
+        emissiveIntensity: col.glowT * 0.5,
+      }),
+    );
     trunk.castShadow = true;
     g.add(trunk);
     if (geo.foliage) {
-      const leaf = new THREE.Mesh(geo.foliage, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, color: col.leaf, emissive: col.leaf, emissiveIntensity: col.glowL * 0.5 }));
+      const leaf = new THREE.Mesh(
+        geo.foliage,
+        new THREE.MeshLambertMaterial({
+          vertexColors: true,
+          flatShading: true,
+          color: col.leaf,
+          emissive: col.leaf,
+          emissiveIntensity: col.glowL * 0.5,
+        }),
+      );
       leaf.castShadow = true;
       g.add(leaf);
     }

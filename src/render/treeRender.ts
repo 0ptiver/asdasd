@@ -39,7 +39,12 @@ export class TreeRenderer {
     for (const t of trees.trees.values()) this.onChange(t, 'add');
   }
 
-  private pool(style: string, part: 'trunk' | 'leaf', lod: 0 | 1, geo: () => THREE.BufferGeometry): InstancePool {
+  private pool(
+    style: string,
+    part: 'trunk' | 'leaf',
+    lod: 0 | 1,
+    geo: () => THREE.BufferGeometry,
+  ): InstancePool {
     const key = `${style}:${part}:${lod}`;
     let p = this.pools.get(key);
     if (!p) {
@@ -75,7 +80,9 @@ export class TreeRenderer {
     const w = WOOD_BY_ID[t.wood]!;
     const vr = 0.9 + 0.2 * hash2(t.x * 7, t.z * 13, 3);
     const trunk = this.c.set(w.color).clone().multiplyScalar(vr);
-    const leaf = this.col(w.leaf || w.color).clone().multiplyScalar(0.9 + 0.2 * hash2(t.x * 3, t.z * 5, 4));
+    const leaf = this.col(w.leaf || w.color)
+      .clone()
+      .multiplyScalar(0.9 + 0.2 * hash2(t.x * 3, t.z * 5, 4));
     const mut = t.mut ? MUTATION_BY_ID[t.mut] : null;
     if (mut?.tint) {
       trunk.lerp(this.col(mut.tint), 0.7);
@@ -100,7 +107,11 @@ export class TreeRenderer {
   }
   private addStump(t: Tree): void {
     const w = WOOD_BY_ID[t.wood]!;
-    this.m.compose(this.v.set(t.x, t.y, t.z), this.q.identity(), this.s.set(t.scale * (t.radius / t.scale / 0.45), t.scale, t.scale * (t.radius / t.scale / 0.45)));
+    this.m.compose(
+      this.v.set(t.x, t.y, t.z),
+      this.q.identity(),
+      this.s.set(t.scale * (t.radius / t.scale / 0.45), t.scale, t.scale * (t.radius / t.scale / 0.45)),
+    );
     this.stump.add(t.id, this.m, this.col(w.color).clone().multiplyScalar(0.8), 0);
   }
 

@@ -7,6 +7,9 @@ import { newGameState, type GameState, type Settings } from '../save/schema';
 import type { Sim } from './sim';
 import type { View } from '../render/view';
 import { Sfx } from '../audio/sfx';
+import type { Interactable } from '../systems/hubSystem';
+import { WorldMap } from '../ui/worldMap';
+import type { Action } from './input';
 
 export type Screen = 'loading' | 'menu' | 'game';
 
@@ -20,6 +23,7 @@ export class Game {
   view: View | null = null;
   state: GameState | null = null;
   readonly sfx = new Sfx();
+  panel: { name: string; arg?: string } | null = null;
   slot = -1;
   screen: Screen = 'loading';
   canvas!: HTMLCanvasElement;
@@ -61,6 +65,18 @@ export class Game {
       else if (n.kind === 'good') this.sfx.play('good');
     });
     this.bus.on('level', () => this.sfx.play('level'));
+    this.input.onAction = (a) => this.onAction(a);
+    this.input.onKeyRaw = (e) => {
+      if (e.code === 'Escape' && this.panel) {
+        this.closePanel();
+        return true;
+      }
+      if (this.panel?.name === 'console') return e.code === 'Backquote' ? false : true;
+      return false;
+    };
+    this.input.onPointerLost = () => {
+      if (this.sim && !this.panel) this.openPanel('pause');
+    };
     this.loop = new FixedLoop(
       (dt) => this.tick(dt),
       (a, fdt) => this.frame(a, fdt),
@@ -86,6 +102,84 @@ export class Game {
     progress(1, 'Ready');
     this.loop.start();
     this.setScreen('menu');
+  }
+
+  // ---------------------------------------------------------------- UI panels
+  openPanel(name: string, arg?: string): void {
+    if (!this.sim) return;
+    this.panel = { name, arg };
+    this.input.uiOpen = true;
+    this.input.releasePointer();
+    this.sfx.play('click');
+    this.bus.emit('ui:open', { panel: name });
+    this.bump(true);
+  }
+  closePanel(): void {
+    if (!this.panel) return;
+    const n = this.panel.name;
+    this.panel = null;
+    this.input.uiOpen = false;
+    this.input.requestPointer();
+    this.bus.emit('ui:close', { panel: n });
+    this.bump(true);
+  }
+  togglePanel(name: string, arg?: string): void {
+    if (this.panel?.name === name) this.closePanel();
+    else if (!this.panel) this.openPanel(name, arg);
+  }
+  private onAction(a: Action): void {
+    if (!this.sim) return;
+    const map: Partial<Record<Action, string>> = {
+      inventory: 'inventory',
+      map: 'map',
+      quests: 'quests',
+      craft: 'craft',
+      build: 'build',
+      garage: 'garage',
+    };
+    if (a === 'console') {
+      this.togglePanel('console');
+      return;
+    }
+    const p = map[a];
+    if (p) this.togglePanel(p);
+  }
+  /** Player pressed E on an interactable. */
+  interact(it: Interactable): void {
+    switch (it.kind) {
+      case 'npc':
+        this.openPanel('npc', it.arg);
+        break;
+      case 'sell':
+        this.openPanel('sell');
+        break;
+      case 'sawmill':
+        this.sim?.sawmill.collect();
+        break;
+      case 'board':
+        this.openPanel('quests');
+        break;
+      case 'garage':
+        this.openPanel('garage');
+        break;
+      case 'gas':
+        this.openPanel('gas');
+        break;
+      case 'dock':
+        this.openPanel('shop', 'harbor');
+        break;
+      case 'train':
+        this.openPanel('train');
+        break;
+      case 'forge':
+        this.openPanel('forge');
+        break;
+      case 'shop':
+        this.openPanel('shop', it.arg);
+        break;
+      default:
+        break;
+    }
   }
 
   applySettings(): void {
@@ -124,6 +218,8 @@ export class Game {
     this.state = state;
     this.sim = buildSim(this, state);
     await this.sim.init();
+    this.sim.worldMap = new WorldMap(this.sim.streamer.terrain);
+    this.sim.worldMap.start();
     this.view!.attach(this.sim);
     this.setScreen('game');
     this.input.requestPointer();
@@ -132,10 +228,13 @@ export class Game {
 
   quit(save = true): void {
     if (this.sim && save) void this.save(true);
+    this.sim?.worldMap?.cancel();
     this.sim?.dispose();
     this.view?.detach();
     this.sim = null;
     this.state = null;
+    this.panel = null;
+    if (this.input) this.input.uiOpen = false;
     this.input?.releasePointer();
     this.setScreen('menu');
   }

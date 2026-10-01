@@ -9,7 +9,12 @@ describe('terrain', () => {
     expect(t.heightAt(100, 100)).not.toBe(new Terrain(999).heightAt(100, 100));
   });
   it('hub is flat and above water', () => {
-    for (const [x, z] of [[0, 0], [30, 30], [-40, 20], [0, 12]]) {
+    for (const [x, z] of [
+      [0, 0],
+      [30, 30],
+      [-40, 20],
+      [0, 12],
+    ]) {
       expect(t.heightAt(x!, z!)).toBeCloseTo(4, 0);
     }
   });
@@ -35,13 +40,16 @@ describe('terrain', () => {
     }
   });
   it('roads connect inside the world', () => {
-    for (const r of ROADS) for (const [x, z] of r) expect(Math.abs(x)).toBeLessThan(1500), expect(Math.abs(z)).toBeLessThan(1500);
+    for (const r of ROADS)
+      for (const [x, z] of r)
+        (expect(Math.abs(x)).toBeLessThan(1500), expect(Math.abs(z)).toBeLessThan(1500));
   });
   it('sky islands exist only in the sky biome', () => {
     let found = 0;
     const b = BIOMES.find((x) => x.id === 'sky')!;
     for (let x = b.center[0] - 220; x < b.center[0] + 220; x += 10)
-      for (let z = b.center[1] - 220; z < b.center[1] + 220; z += 10) if (t.skyIslandHeight(x, z) !== null) found++;
+      for (let z = b.center[1] - 220; z < b.center[1] + 220; z += 10)
+        if (t.skyIslandHeight(x, z) !== null) found++;
     expect(found).toBeGreaterThan(50);
     expect(t.skyIslandHeight(0, 0)).toBeNull();
   });
@@ -70,7 +78,10 @@ describe('trees', () => {
     expect(logs.length).toBeGreaterThanOrEqual(2);
     const total = logs.reduce((s, l) => s + logUnits(l.len, l.r), 0);
     expect(total).toBeGreaterThan(1);
-    const big = planLogs({ height: 20, radius: 1, style: 'redwood' }).reduce((s, l) => s + logUnits(l.len, l.r), 0);
+    const big = planLogs({ height: 20, radius: 1, style: 'redwood' }).reduce(
+      (s, l) => s + logUnits(l.len, l.r),
+      0,
+    );
     expect(big).toBeGreaterThan(total * 3);
   });
 });
